@@ -1,73 +1,73 @@
-# Welcome to your Lovable project
+# Node Task Manager
 
-## Project info
+**Node** is a modern, intelligent task management application designed for students and professionals. It seamlessly integrates with **Google Classroom** to import assignments and provides powerful tools like Kanban boards, analytics dashboards, and priority matrices to keep your work flowing.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+![Node Dashboard Preview](https://github.com/user-attachments/assets/placeholder)
 
-## How can I edit this code?
+## ✨ Key Features
 
-There are several ways of editing your application.
+- **📊 Analytics Dashboard**: Visualize your productivity with activity heatmaps, weekly sparklines, completion rings, and deadline trackers.
+- **🎓 Google Classroom Sync**: Automatically import courses and assignments. Keep track of due dates without manual entry.
+- **📋 Kanban Board**: Drag-and-drop tasks across columns with cross-column support and smooth animations.
+- **📅 Smart Views**: Switch between List, Kanban, Calendar, Matrix (Eisenhower), and Timeline views.
+- **🔒 Supabase Auth**: Secure sign-in with Google OAuth.
+- **🎨 Premium UI**: Beautiful dark mode interface built with Tailwind CSS and Framer Motion.
+- **📱 Responsive**: Fully responsive sidebar and layout for all screen sizes.
 
-**Use Lovable**
+## 🛠️ Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- **Frontend**: React, TypeScript, Vite
+- **Styling**: Tailwind CSS, Lucide React (Icons)
+- **Animations**: Framer Motion
+- **State Management**: Zustand
+- **Backend / Auth**: Supabase (PostgreSQL, Row Level Security)
+- **Drag & Drop**: @dnd-kit
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js (v18+)
+- A Supabase project
+- A Google Cloud project (for OAuth)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/jatinptll/node.git
+   cd node
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory (use `.env.example` as a template):
+   ```env
+   VITE_SUPABASE_PROJECT_ID="your-project-id"
+   VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
+   VITE_SUPABASE_URL="https://your-project.supabase.co"
+   VITE_GOOGLE_CLIENT_ID="your-google-client-id"
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+4. **Run Database Migrations**
+   Copy the SQL from `supabase/migrations/001_initial_schema.sql` and run it in your Supabase SQL Editor to set up tables and RLS policies.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+5. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
 
-**Edit a file directly in GitHub**
+## 🔐 Authentication Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **Supabase**: Go to Authentication -> Providers -> Google and enable it.
+2. **Google Cloud Console**:
+   - Create OAuth 2.0 credentials.
+   - Add your redirect URI: `https://<your-project>.supabase.co/auth/v1/callback`
 
-**Use GitHub Codespaces**
+## 📄 License
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT License. See [LICENSE](LICENSE) for details.
