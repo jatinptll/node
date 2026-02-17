@@ -18,7 +18,7 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   sidebarCollapsed: false,
   activeView: 'list',
-  selectedListId: 'inbox',
+  selectedListId: 'dashboard',
   detailPanelTaskId: null,
   commandPaletteOpen: false,
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),

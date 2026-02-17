@@ -36,8 +36,8 @@
 
     --radius: 0.5rem;
 
-    /* Obsidian surfaces */
-    --obsidian-bg: 0 0% 5%;
+    /* Node surfaces */
+    --node-bg: 0 0% 5%;
     --surface-1: 235 29% 14%;
     --surface-2: 221 43% 16%;
     --surface-3: 245 24% 20%;

@@ -3,6 +3,7 @@ import { useTaskStore } from '@/store/taskStore';
 import { PanelLeftClose, PanelLeft, Search, List, Columns3, Calendar, Grid3X3, GanttChart } from 'lucide-react';
 import type { ViewType } from '@/types/task';
 import { cn } from '@/lib/utils';
+import { UserMenu } from './UserMenu';
 
 const views: { id: ViewType; icon: typeof List; label: string }[] = [
   { id: 'list', icon: List, label: 'List' },
@@ -16,10 +17,13 @@ export const Header = () => {
   const { sidebarCollapsed, toggleSidebar, activeView, setActiveView, toggleCommandPalette, selectedListId } = useUIStore();
   const { lists } = useTaskStore();
 
+  const isDashboard = selectedListId === 'dashboard';
+
   const currentList = lists.find(l => l.id === selectedListId);
-  const pageTitle = currentList?.name
+  const pageTitle = isDashboard ? 'Dashboard'
+    : currentList?.name
     || (selectedListId === 'today' ? 'Today' : selectedListId === 'upcoming' ? 'Upcoming'
-    : selectedListId === 'completed' ? 'Completed' : 'Inbox');
+      : selectedListId === 'completed' ? 'Completed' : selectedListId);
 
   return (
     <header className="h-14 border-b border-border flex items-center justify-between px-4 flex-shrink-0 bg-background">
@@ -42,23 +46,28 @@ export const Header = () => {
           <span className="text-xs font-mono hidden sm:inline">⌘K</span>
         </button>
 
-        <div className="flex items-center ml-3 border border-border rounded-lg p-0.5">
-          {views.map(v => (
-            <button
-              key={v.id}
-              onClick={() => setActiveView(v.id)}
-              className={cn(
-                "p-1.5 rounded-md transition-all",
-                activeView === v.id
-                  ? "bg-primary text-primary-foreground shadow-glow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              title={v.label}
-            >
-              <v.icon className="w-4 h-4" />
-            </button>
-          ))}
-        </div>
+        {/* Hide view switcher on dashboard */}
+        {!isDashboard && (
+          <div className="flex items-center ml-3 border border-border rounded-lg p-0.5">
+            {views.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setActiveView(v.id)}
+                className={cn(
+                  "p-1.5 rounded-md transition-all",
+                  activeView === v.id
+                    ? "bg-primary text-primary-foreground shadow-glow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title={v.label}
+              >
+                <v.icon className="w-4 h-4" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <UserMenu />
       </div>
     </header>
   );
