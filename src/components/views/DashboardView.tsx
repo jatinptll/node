@@ -620,6 +620,9 @@ export const DashboardView = () => {
                             transition={{ delay: 0.45 }}
                             className="rounded-xl border border-border surface-1 p-5 overflow-hidden flex flex-col items-center"
                         >
+                            <div className="w-full mb-3 px-1">
+                                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground whitespace-nowrap">Activity (1 Year)</h3>
+                            </div>
                             <div className="w-full">
                                 <ActivityHeatmap tasks={tasks} />
                             </div>
