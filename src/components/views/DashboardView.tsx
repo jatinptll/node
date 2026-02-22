@@ -138,8 +138,8 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
             }
         });
 
-        // Build 12 weeks grid
-        for (let w = 11; w >= 0; w--) {
+        // Build 52 weeks grid
+        for (let w = 51; w >= 0; w--) {
             const week: { date: Date; count: number }[] = [];
             for (let d = 0; d < 7; d++) {
                 const date = new Date(today);
@@ -153,7 +153,7 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
     }, [tasks]);
 
     const getIntensity = (count: number) => {
-        if (count === 0) return 'bg-muted/20';
+        if (count === 0) return 'bg-black/5 dark:bg-white/10';
         if (count === 1) return 'bg-purple-500/30';
         if (count <= 3) return 'bg-purple-500/50';
         if (count <= 5) return 'bg-purple-500/70';
@@ -161,16 +161,16 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
     };
 
     return (
-        <div className="flex gap-[3px]">
+        <div className="flex gap-[2px] overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
             {weeks.map((week, wi) => (
-                <div key={wi} className="flex flex-col gap-[3px]">
+                <div key={wi} className="flex flex-col gap-[2px]">
                     {week.map((day, di) => (
                         <motion.div
                             key={di}
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ duration: 0.2, delay: wi * 0.03 + di * 0.01 }}
-                            className={cn("w-3 h-3 rounded-[2px] transition-colors", getIntensity(day.count))}
+                            transition={{ duration: 0.2, delay: wi * 0.005 + di * 0.01 }}
+                            className={cn("w-2.5 h-2.5 rounded-[2px] transition-colors flex-shrink-0", getIntensity(day.count))}
                             title={`${day.date.toLocaleDateString()}: ${day.count} task${day.count !== 1 ? 's' : ''} completed`}
                         />
                     ))}
@@ -565,13 +565,13 @@ export const DashboardView = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.45 }}
-                            className="rounded-xl border border-border surface-1 p-5"
+                            className="rounded-xl border border-border surface-1 p-5 overflow-hidden"
                         >
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Activity (12 weeks)</h3>
-                                <div className="flex items-center gap-1">
+                            <div className="flex items-center justify-between mb-3 w-full">
+                                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground whitespace-nowrap">Activity (1 Year)</h3>
+                                <div className="flex items-center gap-1 shrink-0 ml-4">
                                     <span className="text-[9px] text-muted-foreground">Less</span>
-                                    {['bg-muted/20', 'bg-purple-500/30', 'bg-purple-500/50', 'bg-purple-500/70', 'bg-purple-500'].map((cls, i) => (
+                                    {['bg-black/5 dark:bg-white/10', 'bg-purple-500/30', 'bg-purple-500/50', 'bg-purple-500/70', 'bg-purple-500'].map((cls, i) => (
                                         <div key={i} className={cn("w-2.5 h-2.5 rounded-[2px]", cls)} />
                                     ))}
                                     <span className="text-[9px] text-muted-foreground">More</span>
