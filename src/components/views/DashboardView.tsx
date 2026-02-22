@@ -125,7 +125,6 @@ const HBar = ({ label, count, total, color, delay = 0 }: { label: string; count:
 
 const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
     const weeks = useMemo(() => {
-        const result: { date: Date; count: number }[][] = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -138,21 +137,52 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
             }
         });
 
-        // Build 52 weeks grid
-        for (let w = 51; w >= 0; w--) {
-            const week: { date: Date; count: number }[] = [];
+        // Find the Sunday 52 weeks ago
+        const dayOfWeek = today.getDay(); // 0 = Sunday ... 6 = Saturday
+        const totalDays = 52 * 7 + (dayOfWeek + 1);
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - totalDays + 1);
+
+        const weeksArray: { date: Date; count: number; isFuture: boolean; monthIdx: number }[][] = [];
+        let currDate = new Date(startDate);
+
+        for (let w = 0; w < 53; w++) {
+            const week: { date: Date; count: number; isFuture: boolean; monthIdx: number }[] = [];
             for (let d = 0; d < 7; d++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - (w * 7 + (6 - d)));
-                const key = date.toISOString().split('T')[0];
-                week.push({ date, count: completionMap.get(key) || 0 });
+                const key = currDate.toISOString().split('T')[0];
+                week.push({
+                    date: new Date(currDate),
+                    count: completionMap.get(key) || 0,
+                    isFuture: currDate.getTime() > today.getTime(),
+                    monthIdx: currDate.getMonth(),
+                });
+                currDate.setDate(currDate.getDate() + 1);
             }
-            result.push(week);
+            weeksArray.push(week);
         }
-        return result;
+        return weeksArray;
     }, [tasks]);
 
-    const getIntensity = (count: number) => {
+    const monthLabels = useMemo(() => {
+        const labels: { label: string; colIndex: number }[] = [];
+        let currentMonth = -1;
+        weeks.forEach((week, i) => {
+            const monthIdx = week[0].monthIdx;
+            if (monthIdx !== currentMonth) {
+                if (currentMonth !== -1 || week[0].date.getDate() <= 14) {
+                    labels.push({
+                        label: week[0].date.toLocaleString('default', { month: 'short' }),
+                        colIndex: i
+                    });
+                }
+                currentMonth = monthIdx;
+            }
+        });
+        return labels;
+    }, [weeks]);
+
+    const getIntensity = (count: number, isFuture: boolean) => {
+        if (isFuture) return 'bg-transparent';
         if (count === 0) return 'bg-black/5 dark:bg-white/10';
         if (count === 1) return 'bg-purple-500/30';
         if (count <= 3) return 'bg-purple-500/50';
@@ -161,21 +191,44 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
     };
 
     return (
-        <div className="flex gap-[2px] overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
-            {weeks.map((week, wi) => (
-                <div key={wi} className="flex flex-col gap-[2px]">
-                    {week.map((day, di) => (
-                        <motion.div
-                            key={di}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.2, delay: wi * 0.005 + di * 0.01 }}
-                            className={cn("w-2.5 h-2.5 rounded-[2px] transition-colors flex-shrink-0", getIntensity(day.count))}
-                            title={`${day.date.toLocaleDateString()}: ${day.count} task${day.count !== 1 ? 's' : ''} completed`}
-                        />
+        <div className="flex flex-col w-full overflow-x-auto custom-scrollbar pb-2">
+            <div className="flex text-[10px] text-muted-foreground mb-1 mt-1 relative" style={{ minWidth: 'max-content' }}>
+                <div className="w-8 shrink-0" /> {/* Spacer for day labels */}
+                <div className="flex-1 relative h-4">
+                    {monthLabels.map((m, i) => (
+                        <span
+                            key={i}
+                            className="absolute"
+                            style={{ left: `calc(${m.colIndex} * 15px)` }}
+                        >
+                            {m.label}
+                        </span>
                     ))}
                 </div>
-            ))}
+            </div>
+
+            <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
+                <div className="relative w-8 shrink-0 text-[10px] text-muted-foreground mr-1">
+                    <span className="absolute top-[14px] leading-[12px] right-2">Mon</span>
+                    <span className="absolute top-[44px] leading-[12px] right-2">Wed</span>
+                    <span className="absolute top-[74px] leading-[12px] right-2">Fri</span>
+                </div>
+
+                {weeks.map((week, wi) => (
+                    <div key={wi} className="flex flex-col gap-[3px]">
+                        {week.map((day, di) => (
+                            <motion.div
+                                key={di}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.2, delay: wi * 0.005 + di * 0.01 }}
+                                className={cn("w-3 h-3 rounded-[2px] transition-colors shrink-0", getIntensity(day.count, day.isFuture))}
+                                title={!day.isFuture ? `${day.date.toLocaleDateString()}: ${day.count} task${day.count !== 1 ? 's' : ''} completed` : ''}
+                            />
+                        ))}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
@@ -565,19 +618,22 @@ export const DashboardView = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.45 }}
-                            className="rounded-xl border border-border surface-1 p-5 overflow-hidden"
+                            className="rounded-xl border border-border surface-1 p-5 overflow-hidden flex flex-col items-center"
                         >
-                            <div className="flex items-center justify-between mb-3 w-full">
-                                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground whitespace-nowrap">Activity (1 Year)</h3>
-                                <div className="flex items-center gap-1 shrink-0 ml-4">
-                                    <span className="text-[9px] text-muted-foreground">Less</span>
+                            <div className="w-full">
+                                <ActivityHeatmap tasks={tasks} />
+                            </div>
+
+                            <div className="flex items-center justify-between w-full mt-3 px-1" style={{ minWidth: 'max-content' }}>
+                                <span className="text-[10px] text-muted-foreground mr-1">Learn how we count contributions</span>
+                                <div className="flex items-center gap-1 shrink-0 ml-auto">
+                                    <span className="text-[10px] text-muted-foreground mr-1">Less</span>
                                     {['bg-black/5 dark:bg-white/10', 'bg-purple-500/30', 'bg-purple-500/50', 'bg-purple-500/70', 'bg-purple-500'].map((cls, i) => (
-                                        <div key={i} className={cn("w-2.5 h-2.5 rounded-[2px]", cls)} />
+                                        <div key={i} className={cn("w-3 h-3 rounded-[2px]", cls)} />
                                     ))}
-                                    <span className="text-[9px] text-muted-foreground">More</span>
+                                    <span className="text-[10px] text-muted-foreground ml-1">More</span>
                                 </div>
                             </div>
-                            <ActivityHeatmap tasks={tasks} />
                         </motion.div>
 
                         {/* Quick Stats Footer */}
