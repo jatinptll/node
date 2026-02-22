@@ -34,6 +34,7 @@ export interface ClassroomCoursework {
     workType: 'ASSIGNMENT' | 'SHORT_ANSWER_QUESTION' | 'MULTIPLE_CHOICE_QUESTION';
     creationTime: string;
     updateTime: string;
+    scheduledTime?: string;
 }
 
 export interface ClassroomSubmission {
