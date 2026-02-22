@@ -93,8 +93,8 @@ export const ClassroomSync = ({ collapsed }: { collapsed: boolean }) => {
                 {/* Status header */}
                 {syncedCourses.length > 0 && (
                     <div className="flex items-center gap-2 px-2">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-                        <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider flex-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex-1">
                             Classroom Synced
                         </span>
                     </div>
