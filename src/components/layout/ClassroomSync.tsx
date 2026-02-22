@@ -28,12 +28,13 @@ export const ClassroomSync = ({ collapsed }: { collapsed: boolean }) => {
     const handleSync = async () => {
         try {
             const result = await syncNow();
-            if (result.newTasks > 0 || result.updatedCourses > 0) {
+            if (result.newTasks > 0 || result.updatedCourses > 0 || result.removedCourses > 0) {
+                const parts: string[] = [];
+                if (result.newTasks > 0) parts.push(`${result.newTasks} new task${result.newTasks !== 1 ? 's' : ''} imported`);
+                if (result.updatedCourses > 0) parts.push(`${result.updatedCourses} new course${result.updatedCourses !== 1 ? 's' : ''} added`);
+                if (result.removedCourses > 0) parts.push(`${result.removedCourses} unenrolled course${result.removedCourses !== 1 ? 's' : ''} removed`);
                 toast.success(`Sync complete!`, {
-                    description: `${result.newTasks} new task${result.newTasks !== 1 ? 's' : ''} imported${result.updatedCourses > 0
-                            ? `, ${result.updatedCourses} new course${result.updatedCourses !== 1 ? 's' : ''} added`
-                            : ''
-                        }.`,
+                    description: parts.join(', ') + '.',
                 });
             } else {
                 toast.info('Everything is up to date', {

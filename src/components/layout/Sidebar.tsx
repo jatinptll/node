@@ -18,23 +18,14 @@ const navItems = [
 ];
 
 export const Sidebar = () => {
-  const { sidebarCollapsed, selectedListId, setSelectedListId } = useUIStore();
+  const { sidebarCollapsed, selectedListId, setSelectedListId, hiddenListIds, toggleListVisibility } = useUIStore();
   const { workspaces, lists, tasks } = useTaskStore();
-  const [hiddenListIds, setHiddenListIds] = useState<Set<string>>(() => {
-    const stored = localStorage.getItem('node-hidden-lists');
-    return stored ? new Set(JSON.parse(stored)) : new Set();
-  });
   const [showAcademicMenu, setShowAcademicMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const personalLists = lists.filter(l => l.workspaceId === 'personal');
   const academicLists = lists.filter(l => l.workspaceId === 'academic');
   const visibleAcademicLists = academicLists.filter(l => !hiddenListIds.has(l.id));
-
-  // Persist hidden lists
-  useEffect(() => {
-    localStorage.setItem('node-hidden-lists', JSON.stringify(Array.from(hiddenListIds)));
-  }, [hiddenListIds]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -47,27 +38,15 @@ export const Sidebar = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, [showAcademicMenu]);
 
-  const toggleListVisibility = (listId: string) => {
-    setHiddenListIds(prev => {
-      const next = new Set(prev);
-      if (next.has(listId)) {
-        next.delete(listId);
-      } else {
-        next.add(listId);
-      }
-      return next;
-    });
-  };
-
   const getUncompletedCount = (listId: string) => {
     if (listId === 'today') {
       const todayStr = new Date().toISOString().split('T')[0];
-      return tasks.filter(t => t.dueDate === todayStr && !t.isCompleted).length;
+      return tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.has(t.listId)).length;
     }
     if (listId === 'upcoming') {
       const now = new Date();
       const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted).length;
+      return tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.has(t.listId)).length;
     }
     return tasks.filter(t => t.listId === listId && !t.isCompleted).length;
   };
@@ -252,11 +231,14 @@ export const Sidebar = () => {
                   </button>
                 );
               })}
-              {academicLists.length > 0 && hiddenListIds.size > 0 && (
-                <p className="text-[10px] text-muted-foreground pl-3 py-1 font-mono">
-                  {hiddenListIds.size} subject{hiddenListIds.size !== 1 ? 's' : ''} hidden
-                </p>
-              )}
+              {(() => {
+                const actualHiddenCount = academicLists.filter(l => hiddenListIds.has(l.id)).length;
+                return actualHiddenCount > 0 ? (
+                  <p className="text-[10px] text-muted-foreground pl-3 py-1 font-mono">
+                    {actualHiddenCount} subject{actualHiddenCount !== 1 ? 's' : ''} hidden
+                  </p>
+                ) : null;
+              })()}
             </div>
           </>
         )}

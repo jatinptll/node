@@ -262,11 +262,17 @@ const WeeklySparkline = ({ tasks }: { tasks: Task[] }) => {
    ══════════════════════════════════════════ */
 
 export const DashboardView = () => {
-    const { tasks, lists } = useTaskStore();
+    const { tasks: allTasks, lists: allLists } = useTaskStore();
     const { setSelectedListId } = useUIStore();
     const { openDetailPanel } = useUIStore();
+    const { hiddenListIds } = useUIStore();
     const { user } = useAuthStore();
     const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'all'>('week');
+
+    // Filter out tasks and lists from hidden subjects
+    const tasks = allTasks.filter(t => !hiddenListIds.has(t.listId));
+    const lists = allLists.filter(l => !hiddenListIds.has(l.id));
+
 
     const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there';
 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Task, TaskList, Workspace, Section, KanbanColumn, Priority, TaskStatus } from '@/types/task';
 import * as db from '@/lib/database';
+import { useUIStore } from '@/store/uiStore';
 
 const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
 
@@ -66,12 +67,18 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         db.fetchUserLists(userId),
         db.fetchUserTasks(userId),
       ]);
+
+      const finalLists = lists.length > 0 ? lists : defaultLists;
+
       set({
-        lists: lists.length > 0 ? lists : defaultLists,
+        lists: finalLists,
         tasks,
         userId,
         isLoaded: true,
       });
+
+      // Cleanup hidden list IDs that reference lists that no longer exist
+      useUIStore.getState().cleanupHiddenLists(finalLists.map(l => l.id));
     } catch (err) {
       console.error('Failed to load user data:', err);
       set({ userId, isLoaded: true });
@@ -177,7 +184,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
     // Delete from Supabase
     if (userId) {
-      db.deleteTask(userId, taskId).catch(err => console.error('Failed to delete task:', err));
+      db.deleteTaskFromDB(userId, taskId).catch(err => console.error('Failed to delete task:', err));
     }
   },
 
@@ -195,17 +202,18 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   getTasksForList: (listId) => {
+    const hiddenListIds = useUIStore.getState().hiddenListIds;
     if (listId === 'today') {
       const todayStr = new Date().toISOString().split('T')[0];
-      return get().tasks.filter(t => t.dueDate === todayStr && !t.isCompleted);
+      return get().tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.has(t.listId));
     }
     if (listId === 'upcoming') {
       const now = new Date();
       const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return get().tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted);
+      return get().tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.has(t.listId));
     }
     if (listId === 'completed') {
-      return get().tasks.filter(t => t.isCompleted);
+      return get().tasks.filter(t => t.isCompleted && !hiddenListIds.has(t.listId));
     }
     return get().tasks.filter(t => t.listId === listId);
   },
