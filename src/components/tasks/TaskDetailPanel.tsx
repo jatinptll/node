@@ -13,9 +13,10 @@ const priorityOptions: { value: Priority; label: string; color: string }[] = [
 ];
 
 export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
-  const { tasks, toggleTask, updateTask, deleteTask } = useTaskStore();
+  const { tasks, toggleTask, updateTask, deleteTask, lists } = useTaskStore();
   const { closeDetailPanel } = useUIStore();
   const task = tasks.find(t => t.id === taskId);
+  const parentList = lists.find(l => l.id === task?.listId);
 
   if (!task) return null;
 
@@ -69,13 +70,24 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
           className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none min-h-[80px] p-3 rounded-lg border border-border focus:border-primary/30 focus:glow-sm transition-all"
         />
 
-        {/* Classroom badge */}
-        {task.source === 'classroom' && (
+        {/* Subject / Classroom badge */}
+        {parentList && parentList.isAcademic ? (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border font-mono text-sm"
+            style={{ backgroundColor: `${parentList.color}15`, borderColor: `${parentList.color}30`, color: parentList.color }}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span className="truncate">{parentList.courseName || parentList.name}</span>
+            {task.source === 'classroom' && (
+              <span className="ml-auto text-xs opacity-70 truncate">Classroom Link</span>
+            )}
+          </div>
+        ) : task.source === 'classroom' ? (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
             <BookOpen className="w-4 h-4 text-primary" />
             <span className="text-sm text-primary font-mono">Google Classroom Assignment</span>
           </div>
-        )}
+        ) : null}
 
         {/* Details section */}
         <div className="space-y-3">

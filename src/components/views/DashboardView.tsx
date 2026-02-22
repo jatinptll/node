@@ -108,7 +108,7 @@ const HBar = ({ label, count, total, color, delay = 0 }: { label: string; count:
                 <span className="text-muted-foreground">{label}</span>
                 <span className="font-mono text-foreground">{count}</span>
             </div>
-            <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+            <div className="h-2 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                 <motion.div
                     className="h-full rounded-full"
                     style={{ backgroundColor: color }}
@@ -124,11 +124,35 @@ const HBar = ({ label, count, total, color, delay = 0 }: { label: string; count:
 /* ──────────────── Activity Heatmap (Last 12 Weeks) ──────────────── */
 
 const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
+    const { user } = useAuthStore();
+    const joinYear = user?.created_at ? new Date(user.created_at).getFullYear() : new Date().getFullYear();
+    const currentYear = new Date().getFullYear();
+
+    const minYear = useMemo(() => {
+        let min = joinYear;
+        tasks.forEach(t => {
+            if (t.completedAt) {
+                const year = new Date(t.completedAt).getFullYear();
+                if (year < min) min = year;
+            }
+        });
+        return min;
+    }, [tasks, joinYear]);
+
+    const [selectedYear, setSelectedYear] = useState(currentYear);
+
+    const availableYears = useMemo(() => {
+        const years = [];
+        for (let y = currentYear; y >= minYear; y--) {
+            years.push(y);
+        }
+        return years;
+    }, [currentYear, minYear]);
+
     const weeks = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Get completion dates map
         const completionMap = new Map<string, number>();
         tasks.forEach(t => {
             if (t.completedAt) {
@@ -137,23 +161,30 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
             }
         });
 
-        // Find the Sunday 52 weeks ago
-        const dayOfWeek = today.getDay(); // 0 = Sunday ... 6 = Saturday
-        const totalDays = 52 * 7 + (dayOfWeek + 1);
-        const startDate = new Date(today);
-        startDate.setDate(today.getDate() - totalDays + 1);
+        const startDate = new Date(selectedYear, 0, 1);
+        const startDayOfWeek = startDate.getDay();
+        if (startDayOfWeek > 0) {
+            startDate.setDate(startDate.getDate() - startDayOfWeek);
+        }
 
-        const weeksArray: { date: Date; count: number; isFuture: boolean; monthIdx: number }[][] = [];
+        const endDate = new Date(selectedYear, 11, 31);
+        const endDayOfWeek = endDate.getDay();
+        if (endDayOfWeek < 6) {
+            endDate.setDate(endDate.getDate() + (6 - endDayOfWeek));
+        }
+
+        const weeksArray: { date: Date; count: number; isFuture: boolean; isDifferentYear: boolean; monthIdx: number }[][] = [];
         let currDate = new Date(startDate);
 
-        for (let w = 0; w < 53; w++) {
-            const week: { date: Date; count: number; isFuture: boolean; monthIdx: number }[] = [];
+        while (currDate <= endDate) {
+            const week: { date: Date; count: number; isFuture: boolean; isDifferentYear: boolean; monthIdx: number }[] = [];
             for (let d = 0; d < 7; d++) {
                 const key = currDate.toISOString().split('T')[0];
                 week.push({
                     date: new Date(currDate),
                     count: completionMap.get(key) || 0,
                     isFuture: currDate.getTime() > today.getTime(),
+                    isDifferentYear: currDate.getFullYear() !== selectedYear,
                     monthIdx: currDate.getMonth(),
                 });
                 currDate.setDate(currDate.getDate() + 1);
@@ -161,28 +192,26 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
             weeksArray.push(week);
         }
         return weeksArray;
-    }, [tasks]);
+    }, [tasks, selectedYear]);
 
     const monthLabels = useMemo(() => {
         const labels: { label: string; colIndex: number }[] = [];
         let currentMonth = -1;
         weeks.forEach((week, i) => {
-            const monthIdx = week[0].monthIdx;
-            if (monthIdx !== currentMonth) {
-                if (currentMonth !== -1 || week[0].date.getDate() <= 14) {
-                    labels.push({
-                        label: week[0].date.toLocaleString('default', { month: 'short' }),
-                        colIndex: i
-                    });
-                }
-                currentMonth = monthIdx;
+            const mainMonthIdx = week[3].monthIdx;
+            if (mainMonthIdx !== currentMonth) {
+                labels.push({
+                    label: week[3].date.toLocaleString('default', { month: 'short' }),
+                    colIndex: i
+                });
+                currentMonth = mainMonthIdx;
             }
         });
         return labels;
     }, [weeks]);
 
-    const getIntensity = (count: number, isFuture: boolean) => {
-        if (isFuture) return 'bg-transparent';
+    const getIntensity = (count: number, isFuture: boolean, isDifferentYear: boolean) => {
+        if (isDifferentYear || isFuture) return 'bg-transparent';
         if (count === 0) return 'bg-black/5 dark:bg-white/10';
         if (count === 1) return 'bg-purple-500/30';
         if (count <= 3) return 'bg-purple-500/50';
@@ -191,43 +220,57 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
     };
 
     return (
-        <div className="flex flex-col w-full overflow-x-auto custom-scrollbar pb-2">
-            <div className="flex text-[10px] text-muted-foreground mb-1 mt-1 relative" style={{ minWidth: 'max-content' }}>
-                <div className="w-8 shrink-0" /> {/* Spacer for day labels */}
-                <div className="flex-1 relative h-4">
-                    {monthLabels.map((m, i) => (
-                        <span
-                            key={i}
-                            className="absolute"
-                            style={{ left: `calc(${m.colIndex} * 15px)` }}
-                        >
-                            {m.label}
-                        </span>
+        <div className="flex flex-col w-full">
+            <div className="flex justify-between items-center mb-3 px-1">
+                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground whitespace-nowrap">Activity ({selectedYear})</h3>
+                <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="bg-transparent text-xs font-mono text-foreground border border-border rounded px-2 py-0.5 outline-none focus:border-primary/50 cursor-pointer"
+                >
+                    {availableYears.map(year => (
+                        <option key={year} value={year}>{year}</option>
                     ))}
-                </div>
+                </select>
             </div>
-
-            <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
-                <div className="relative w-8 shrink-0 text-[10px] text-muted-foreground mr-1">
-                    <span className="absolute top-[14px] leading-[12px] right-2">Mon</span>
-                    <span className="absolute top-[44px] leading-[12px] right-2">Wed</span>
-                    <span className="absolute top-[74px] leading-[12px] right-2">Fri</span>
-                </div>
-
-                {weeks.map((week, wi) => (
-                    <div key={wi} className="flex flex-col gap-[3px]">
-                        {week.map((day, di) => (
-                            <motion.div
-                                key={di}
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ duration: 0.2, delay: wi * 0.005 + di * 0.01 }}
-                                className={cn("w-3 h-3 rounded-[2px] transition-colors shrink-0", getIntensity(day.count, day.isFuture))}
-                                title={!day.isFuture ? `${day.date.toLocaleDateString()}: ${day.count} task${day.count !== 1 ? 's' : ''} completed` : ''}
-                            />
+            <div className="flex flex-col w-full overflow-x-auto custom-scrollbar pb-2">
+                <div className="flex text-[10px] text-muted-foreground mb-1 mt-1 relative" style={{ minWidth: 'max-content' }}>
+                    <div className="w-8 shrink-0" />
+                    <div className="flex-1 relative h-4">
+                        {monthLabels.map((m, i) => (
+                            <span
+                                key={i}
+                                className="absolute"
+                                style={{ left: `calc(${m.colIndex} * 15px)` }}
+                            >
+                                {m.label}
+                            </span>
                         ))}
                     </div>
-                ))}
+                </div>
+
+                <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
+                    <div className="relative w-8 shrink-0 text-[10px] text-muted-foreground mr-1">
+                        <span className="absolute top-[14px] leading-[12px] right-2">Mon</span>
+                        <span className="absolute top-[44px] leading-[12px] right-2">Wed</span>
+                        <span className="absolute top-[74px] leading-[12px] right-2">Fri</span>
+                    </div>
+
+                    {weeks.map((week, wi) => (
+                        <div key={wi} className="flex flex-col gap-[3px]">
+                            {week.map((day, di) => (
+                                <motion.div
+                                    key={di}
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 0.2, delay: wi * 0.005 + di * 0.01 }}
+                                    className={cn("w-3 h-3 rounded-[2px] transition-colors shrink-0", getIntensity(day.count, day.isFuture, day.isDifferentYear))}
+                                    title={(!day.isFuture && !day.isDifferentYear) ? `${day.date.toLocaleDateString()}: ${day.count} task${day.count !== 1 ? 's' : ''} completed` : ''}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -593,7 +636,7 @@ export const DashboardView = () => {
                                         >
                                             <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: list.color }} />
                                             <span className="text-xs text-foreground flex-1 text-left truncate">{list.name}</span>
-                                            <div className="w-16 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                                            <div className="w-16 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                                                 <motion.div
                                                     className="h-full rounded-full"
                                                     style={{ backgroundColor: list.color }}
@@ -620,9 +663,6 @@ export const DashboardView = () => {
                             transition={{ delay: 0.45 }}
                             className="rounded-xl border border-border surface-1 p-5 overflow-hidden flex flex-col items-center"
                         >
-                            <div className="w-full mb-3 px-1">
-                                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground whitespace-nowrap">Activity (1 Year)</h3>
-                            </div>
                             <div className="w-full">
                                 <ActivityHeatmap tasks={tasks} />
                             </div>

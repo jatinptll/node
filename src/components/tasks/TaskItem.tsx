@@ -34,10 +34,13 @@ const getDueDateInfo = (dueDate?: string) => {
 };
 
 export const TaskItem = ({ task }: { task: Task }) => {
-  const { toggleTask } = useTaskStore();
-  const { openDetailPanel } = useUIStore();
+  const { toggleTask, lists } = useTaskStore();
+  const { openDetailPanel, selectedListId } = useUIStore();
   const dueInfo = getDueDateInfo(task.dueDate);
   const completedSubtasks = task.subtasks.filter(s => s.isCompleted).length;
+
+  const parentList = lists.find(l => l.id === task.listId);
+  const showListTag = parentList && selectedListId !== parentList.id;
 
   return (
     <motion.div
@@ -83,8 +86,16 @@ export const TaskItem = ({ task }: { task: Task }) => {
 
       {/* Badges */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {task.source === 'classroom' && (
-          <span className="flex items-center gap-1 text-xs bg-primary/15 text-primary px-1.5 py-0.5 rounded font-mono">
+        {showListTag && parentList ? (
+          <span
+            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-mono truncate max-w-[120px]"
+            style={{ backgroundColor: `${parentList.color}15`, color: parentList.color }}
+          >
+            {parentList.isAcademic && <BookOpen className="w-3 h-3" />}
+            <span className="hidden sm:inline truncate">{parentList.courseName || parentList.name}</span>
+          </span>
+        ) : task.source === 'classroom' && (
+          <span className="flex items-center gap-1 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-mono">
             <BookOpen className="w-3 h-3" />
             <span className="hidden sm:inline">Classroom</span>
           </span>

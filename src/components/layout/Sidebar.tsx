@@ -145,7 +145,6 @@ export const Sidebar = () => {
             {/* Academic workspace */}
             <div className="px-4 pt-4 flex items-center gap-2">
               <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest flex-1">Academics</p>
-              <GraduationCap className="w-3.5 h-3.5 text-primary" />
 
               {/* 3-dot menu */}
               {academicLists.length > 0 && (
