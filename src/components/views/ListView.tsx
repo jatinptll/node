@@ -23,7 +23,7 @@ export const ListView = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 animate-fade-in">
       {/* Progress bar */}
-      {totalTasks > 0 && (
+      {totalTasks > 0 && selectedListId !== 'upcoming' && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-mono text-muted-foreground">
