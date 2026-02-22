@@ -4,6 +4,7 @@ import { PanelLeftClose, PanelLeft, Search, List, Columns3, Calendar, Grid3X3, G
 import type { ViewType } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { UserMenu } from './UserMenu';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const views: { id: ViewType; icon: typeof List; label: string }[] = [
   { id: 'list', icon: List, label: 'List' },
@@ -67,6 +68,7 @@ export const Header = () => {
           </div>
         )}
 
+        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

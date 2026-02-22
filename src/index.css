@@ -6,6 +6,73 @@
 
 @layer base {
   :root {
+    /* Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
+
+    --primary: 263 70% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 4%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 263 50% 90%;
+    --accent-foreground: 263 70% 58%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 263 70% 58%;
+
+    --radius: 0.5rem;
+
+    /* Node surfaces */
+    --node-bg: 0 0% 100%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 240 5% 96%;
+    --surface-3: 240 5% 92%;
+
+    /* Purple scale */
+    --purple-900: 263 74% 35%;
+    --purple-700: 263 67% 50%;
+    --purple-600: 263 70% 58%;
+    --purple-400: 263 86% 77%;
+    --purple-300: 263 90% 85%;
+
+    /* Status colors */
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --info: 217 91% 60%;
+
+    /* Shadows */
+    --glow-purple: 0 0 20px hsla(263, 70%, 58%, 0.3);
+    --glow-sm: 0 0 10px hsla(263, 70%, 58%, 0.15);
+    --elevation-1: 0 2px 8px hsla(0, 0%, 0%, 0.1);
+    --elevation-2: 0 8px 24px hsla(0, 0%, 0%, 0.15);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 10% 4%;
+    --sidebar-primary: 263 70% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 92%;
+    --sidebar-accent-foreground: 240 10% 4%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 263 70% 58%;
+  }
+
+  .dark {
+    /* Dark Theme (Original) */
     --background: 240 10% 4%;
     --foreground: 214 32% 91%;
 
