@@ -28,8 +28,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
             // Get current session
             const { data: { session } } = await supabase.auth.getSession();
+            let user = session?.user ?? null;
+
+            if (user) {
+                // Fetch fresh user data from server to get the latest metadata
+                const { data: { user: freshUser } } = await supabase.auth.getUser();
+                if (freshUser) {
+                    user = freshUser;
+                }
+            }
+
             set({
-                user: session?.user ?? null,
+                user,
                 session,
                 isLoading: false,
                 isInitialized: true,
