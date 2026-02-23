@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { supabase } from '@/integrations/supabase/client';
 import type { ViewType } from '@/types/task';
 
 interface UIState {
@@ -17,6 +18,7 @@ interface UIState {
   toggleListVisibility: (listId: string) => void;
   isListHidden: (listId: string) => boolean;
   cleanupHiddenLists: (existingListIds: string[]) => void;
+  setHiddenListIds: (ids: Set<string>) => void;
 }
 
 function loadHiddenLists(): Set<string> {
@@ -30,6 +32,17 @@ function loadHiddenLists(): Set<string> {
 
 function saveHiddenLists(ids: Set<string>) {
   localStorage.setItem('node-hidden-lists', JSON.stringify(Array.from(ids)));
+}
+
+
+async function syncHiddenListsToCloud(ids: Set<string>) {
+  localStorage.setItem('node-hidden-lists', JSON.stringify(Array.from(ids)));
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) {
+    await supabase.auth.updateUser({
+      data: { hidden_lists: Array.from(ids) }
+    });
+  }
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -53,7 +66,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       } else {
         next.add(listId);
       }
-      saveHiddenLists(next);
+      syncHiddenListsToCloud(next);
       return { hiddenListIds: next };
     });
   },

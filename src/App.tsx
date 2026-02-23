@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useTaskStore } from "@/store/taskStore";
 import { useClassroomStore } from "@/store/classroomStore";
+import { useUIStore } from "@/store/uiStore";
 import Index from "./pages/Index";
 import LoginPage from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -55,8 +56,14 @@ const AppContent = () => {
     if (user && isInitialized) {
       loadUserData(user.id);
       loadSyncState(user.id);
+
+      // Restore hidden lists from cloud
+      const cloudHidden = user.user_metadata?.hidden_lists;
+      if (Array.isArray(cloudHidden)) {
+        useUIStore.getState().setHiddenListIds(new Set(cloudHidden));
+      }
     }
-  }, [user?.id, isInitialized, loadUserData, loadSyncState]);
+  }, [user, isInitialized, loadUserData, loadSyncState]);
 
   return (
     <BrowserRouter>

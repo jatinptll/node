@@ -11,6 +11,12 @@ import { cn } from '@/lib/utils';
 import { ClassroomSync } from './ClassroomSync';
 import { EditWorkspacesDialog } from './EditWorkspacesDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -26,8 +32,8 @@ export const Sidebar = () => {
   const [openWorkspaces, setOpenWorkspaces] = useState<Record<string, boolean>>({});
   const [editWorkspacesOpen, setEditWorkspacesOpen] = useState(false);
 
-  
-  
+
+
 
   // Close menu on outside click
   useEffect(() => {
@@ -117,7 +123,7 @@ export const Sidebar = () => {
         </div>
 
         {/* Nav */}
-        <div className="flex-1 overflow-y-auto py-2 space-y-1">
+        <div className="flex-1 overflow-y-auto py-2 space-y-1 hide-scrollbar">
           {/* Quick nav */}
           <div className="px-2 space-y-0.5">
             {navItems.map(item => {
@@ -128,10 +134,10 @@ export const Sidebar = () => {
                   key={item.id}
                   onClick={() => handleItemClick(item.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all",
                     isActive
-                      ? "surface-2 text-foreground border-l-2 border-primary glow-sm"
-                      : "text-muted-foreground hover:surface-3 hover:text-foreground"
+                      ? "bg-primary/20 text-foreground border-l-[3px] border-primary shadow-[0_0_15px_rgba(124,58,237,0.3)] font-medium"
+                      : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                   )}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -150,7 +156,7 @@ export const Sidebar = () => {
             })}
           </div>
 
-                    {/* Personal/Academic workspaces */}
+          {/* Personal/Academic workspaces */}
           {!sidebarCollapsed && (
             <div className="flex flex-col gap-2 pt-2">
               {workspaces.map(w => {
@@ -163,7 +169,7 @@ export const Sidebar = () => {
                 return (
                   <div key={w.id} className="mt-2">
                     <div className="px-4 flex items-center justify-between group">
-                      <p 
+                      <p
                         className="text-xs font-mono text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors flex-1 cursor-pointer"
                         onClick={() => setOpenWorkspaces(prev => ({ ...prev, [w.id]: !isOpen }))}
                       >
@@ -173,66 +179,67 @@ export const Sidebar = () => {
                       <div className="flex items-center gap-2">
                         {wLists.length > 0 && (
                           <div className="relative workspace-menu-container">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(isMenuOpen ? null : w.id);
-                              }}
-                              className="p-0.5 rounded hover:surface-3 text-muted-foreground hover:text-foreground transition-colors"
-                              title="Edit visible subjects"
-                            >
-                              <MoreHorizontal className="w-3.5 h-3.5" />
-                            </button>
-
-                            <AnimatePresence>
-                              {isMenuOpen && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: -4, scale: 0.95 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                                  transition={{ duration: 0.15 }}
-                                  className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-border surface-1 shadow-elevation-3 z-50 overflow-hidden"
+                            <DropdownMenu open={isMenuOpen} onOpenChange={(open) => setActiveMenuId(open ? w.id : null)}>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                  className="p-0.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground transition-colors"
+                                  title="Edit visible subjects"
                                 >
-                                  <div className="px-3 py-2 border-b border-border">
-                                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
-                                      Show / Hide Items
-                                    </p>
-                                  </div>
-                                  <div className="py-1 max-h-60 overflow-y-auto">
-                                    {wLists.map((list) => {
-                                      const isHidden = hiddenListIds.has(list.id);
-                                      return (
-                                        <button
-                                          key={list.id}
-                                          onClick={() => toggleListVisibility(list.id)}
-                                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:surface-3 transition-colors"
-                                        >
-                                          <div
-                                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                                            style={{ backgroundColor: list.color, opacity: isHidden ? 0.3 : 1 }}
-                                          />
-                                          <span className={cn(
-                                            "flex-1 text-left text-xs truncate",
-                                            isHidden ? "text-muted-foreground line-through" : "text-foreground"
-                                          )}>
-                                            {list.name}
-                                          </span>
-                                          {isHidden ? (
-                                            <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
-                                          ) : (
-                                            <Eye className="w-3.5 h-3.5 text-primary" />
-                                          )}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                                  <MoreHorizontal className="w-3.5 h-3.5" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                className="w-56"
+                                align="end"
+                                side={isMobile ? "bottom" : "right"}
+                                sideOffset={isMobile ? 8 : 16}
+                                collisionPadding={8}
+                              >
+                                <div className="px-3 py-2 border-b border-border">
+                                  <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                                    Show / Hide Items
+                                  </p>
+                                </div>
+                                <div className="py-1 max-h-60 overflow-y-auto hide-scrollbar">
+                                  {wLists.map((list) => {
+                                    const isHidden = hiddenListIds.has(list.id);
+                                    return (
+                                      <DropdownMenuItem
+                                        key={list.id}
+                                        onSelect={(e) => {
+                                          e.preventDefault();
+                                          toggleListVisibility(list.id);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-2 transition-colors cursor-pointer"
+                                      >
+                                        <div
+                                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                          style={{ backgroundColor: list.color, opacity: isHidden ? 0.3 : 1 }}
+                                        />
+                                        <span className={cn(
+                                          "flex-1 text-left text-xs truncate",
+                                          isHidden ? "text-muted-foreground line-through" : "text-foreground"
+                                        )}>
+                                          {list.name}
+                                        </span>
+                                        {isHidden ? (
+                                          <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                                        ) : (
+                                          <Eye className="w-3.5 h-3.5 text-primary" />
+                                        )}
+                                      </DropdownMenuItem>
+                                    );
+                                  })}
+                                </div>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         )}
 
-                        <div 
+                        <div
                           className="cursor-pointer flex items-center justify-center p-0.5"
                           onClick={() => setOpenWorkspaces(prev => ({ ...prev, [w.id]: !isOpen }))}
                         >
@@ -244,7 +251,7 @@ export const Sidebar = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <AnimatePresence>
                       {isOpen && (
                         <motion.div
@@ -263,8 +270,8 @@ export const Sidebar = () => {
                                     key={list.id}
                                     onClick={() => handleItemClick(list.id)}
                                     className={cn(
-                                      "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                                      isActive ? "surface-2 text-foreground border-l-2 border-primary glow-sm" : "text-muted-foreground hover:surface-3 hover:text-foreground"
+                                      "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all",
+                                      isActive ? "bg-primary/20 text-foreground border-l-[3px] border-primary shadow-[0_0_15px_rgba(124,58,237,0.3)] font-medium" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                                     )}
                                   >
                                     <div className="w-3 h-3 rounded-md flex-shrink-0" style={{ backgroundColor: list.color }} />
@@ -282,7 +289,7 @@ export const Sidebar = () => {
                             )}
                             {hiddenCount > 0 && (
                               <p className="text-[10px] text-muted-foreground pl-3 py-1 font-mono">
-                                {hiddenCount} item{hiddenCount !== 1 ? 's' : ''} hidden
+                                {hiddenCount} page{hiddenCount !== 1 ? 's' : ''} hidden
                               </p>
                             )}
                           </div>
