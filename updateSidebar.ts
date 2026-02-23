@@ -1,35 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useUIStore } from '@/store/uiStore';
-import { useTaskStore } from '@/store/taskStore';
-import {
-  CalendarDays, CalendarRange, BarChart3, CheckCircle2,
-  ChevronDown, ChevronRight, GraduationCap, Diamond,
-  MoreHorizontal, Eye, EyeOff
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ClassroomSync } from './ClassroomSync';
-import { EditWorkspacesDialog } from './EditWorkspacesDialog';
-import { useIsMobile } from '@/hooks/use-mobile';
+import * as fs from 'fs';
 
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-  { id: 'today', label: 'Today', icon: CalendarDays },
-  { id: 'upcoming', label: 'Upcoming', icon: CalendarRange },
-  { id: 'completed', label: 'Completed', icon: CheckCircle2 },
-];
+const sidebarPath = './src/components/layout/Sidebar.tsx';
+let content = fs.readFileSync(sidebarPath, 'utf8');
 
-export const Sidebar = () => {
-  const { sidebarCollapsed, selectedListId, setSelectedListId, hiddenListIds, toggleListVisibility } = useUIStore();
-  const { workspaces, lists, tasks } = useTaskStore();
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [openWorkspaces, setOpenWorkspaces] = useState<Record<string, boolean>>({});
-  const [editWorkspacesOpen, setEditWorkspacesOpen] = useState(false);
+// Replace states
+content = content.replace(
+  /  const \[showAcademicMenu, setShowAcademicMenu\] = useState\(false\);\n  const menuRef = useRef<HTMLDivElement>\(null\);\n\n  const \[isPersonalOpen, setIsPersonalOpen\] = useState\(true\);\n  const \[isAcademicsOpen, setIsAcademicsOpen\] = useState\(true\);\n  const \[customOpenState, setCustomOpenState\] = useState<Record<string, boolean>>\(\{\}\);\n/,
+  `  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [openWorkspaces, setOpenWorkspaces] = useState<Record<string, boolean>>({});\n`
+);
 
-  
-  
-
-  // Close menu on outside click
+// Replace outside click
+content = content.replace(
+  /  \/\/ Close menu on outside click\n  useEffect\(\(\) => \{\n    const handler = \(e: MouseEvent\) => \{\n      if \(menuRef\.current && !menuRef\.current\.contains\(e\.target as Node\)\) \{\n        setShowAcademicMenu\(false\);\n      \}\n    \};\n    if \(showAcademicMenu\) document\.addEventListener\('mousedown', handler\);\n    return \(\) => document\.removeEventListener\('mousedown', handler\);\n  \}, \[showAcademicMenu\]\);/,
+  `  // Close menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (!(e.target as Element).closest('.workspace-menu-container')) {
@@ -38,119 +22,19 @@ export const Sidebar = () => {
     };
     if (activeMenuId) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [activeMenuId]);
+  }, [activeMenuId]);`
+);
 
-  const getUncompletedCount = (listId: string) => {
-    if (listId === 'today') {
-      const todayStr = new Date().toISOString().split('T')[0];
-      return tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.has(t.listId)).length;
-    }
-    if (listId === 'upcoming') {
-      const now = new Date();
-      const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.has(t.listId)).length;
-    }
-    return tasks.filter(t => t.listId === listId && !t.isCompleted).length;
-  };
 
-  // Check if we are on a mobile device
-  const isMobile = useIsMobile();
+// We need to replace everything between `{/* Personal/Academic workspaces */}` and the end of `{/* Custom Workspaces */}` block
+const wsStartComment = '{/* Personal/Academic workspaces */}';
+const editWsComment = '{/* Edit Workspaces Instead of Sync */}';
 
-  // Hide sidebar on item click for mobile
-  const handleItemClick = (id: string) => {
-    setSelectedListId(id);
-    if (isMobile && !sidebarCollapsed) {
-      useUIStore.getState().toggleSidebar();
-    }
-  };
+const wsStartIndex = content.indexOf(wsStartComment);
+const editWsIndex = content.indexOf(editWsComment);
 
-  return (
-    <>
-      <AnimatePresence>
-        {!sidebarCollapsed && isMobile && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => useUIStore.getState().toggleSidebar()}
-            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
-          />
-        )}
-      </AnimatePresence>
-
-      <motion.aside
-        animate={{
-          width: isMobile ? 280 : (sidebarCollapsed ? 64 : 240),
-          x: isMobile ? (sidebarCollapsed ? -280 : 0) : 0
-        }}
-        transition={{ duration: 0.2, ease: 'easeInOut' }}
-        className={cn(
-          "h-screen flex flex-col border-r border-border bg-sidebar overflow-hidden flex-shrink-0",
-          isMobile ? "fixed left-0 top-0 bottom-0 z-50 shadow-elevation-2" : "relative"
-        )}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => setSelectedListId('dashboard')}
-          className="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0 cursor-pointer hover:bg-surface-2 transition-colors"
-        >
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-purple-800 flex-shrink-0 glow-purple">
-            <Diamond className="w-4 h-4 text-white" />
-          </div>
-          <AnimatePresence>
-            {!sidebarCollapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex flex-col min-w-0 flex-1"
-              >
-                <span className="font-mono font-bold text-base text-foreground tracking-wide leading-tight">
-                  Node
-                </span>
-                <span className="text-[10px] text-muted-foreground font-mono tracking-wider uppercase leading-tight">
-                  Task Manager
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Nav */}
-        <div className="flex-1 overflow-y-auto py-2 space-y-1">
-          {/* Quick nav */}
-          <div className="px-2 space-y-0.5">
-            {navItems.map(item => {
-              const isActive = selectedListId === item.id;
-              const count = getUncompletedCount(item.id);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleItemClick(item.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                    isActive
-                      ? "surface-2 text-foreground border-l-2 border-primary glow-sm"
-                      : "text-muted-foreground hover:surface-3 hover:text-foreground"
-                  )}
-                >
-                  <item.icon className="w-4 h-4 flex-shrink-0" />
-                  {!sidebarCollapsed && (
-                    <>
-                      <span className="flex-1 text-left font-mono text-xs uppercase tracking-wider">{item.label}</span>
-                      {count > 0 && (
-                        <span className="min-w-[22px] h-[22px] flex items-center justify-center text-[11px] bg-primary/20 text-primary px-1.5 rounded-full font-mono">
-                          {count}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-                    {/* Personal/Academic workspaces */}
+if (wsStartIndex !== -1 && editWsIndex !== -1) {
+  const replacement = `          ${wsStartComment}
           {!sidebarCollapsed && (
             <div className="flex flex-col gap-2 pt-2">
               {workspaces.map(w => {
@@ -296,19 +180,15 @@ export const Sidebar = () => {
           )}
         </div>
 
-        {/* Edit Workspaces Instead of Sync */}
-        <div className="p-4 border-t border-border bg-sidebar mt-auto">
-          {!sidebarCollapsed && (
-            <button
-              onClick={() => setEditWorkspacesOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm bg-surface-2 text-foreground hover:bg-surface-3 transition-colors"
-            >
-              <span className="font-mono font-medium">Edit Workspaces</span>
-            </button>
-          )}
-        </div>
-      </motion.aside>
-      <EditWorkspacesDialog open={editWorkspacesOpen} onOpenChange={setEditWorkspacesOpen} />
-    </>
-  );
-};
+        ${editWsComment}`;
+
+  const afterEditWsStr = content.substring(editWsIndex + editWsComment.length);
+  content = content.substring(0, wsStartIndex) + replacement + afterEditWsStr;
+}
+
+// Clean up unused variables
+content = content.replace("const personalLists = lists.filter(l => l.workspaceId === 'personal' || l.workspaceId === personalWorkspace?.id);\n  const academicLists = lists.filter(l => l.workspaceId === 'academic' || l.workspaceId === academicWorkspace?.id);\n  const visibleAcademicLists = academicLists.filter(l => !hiddenListIds.has(l.id));", "");
+content = content.replace("const personalWorkspace = workspaces.find(w => w.type === 'personal');\n  const academicWorkspace = workspaces.find(w => w.type === 'academic');\n  const customWorkspaces = workspaces.filter(w => w.type === 'custom');", "");
+content = content.replace("// Find the exact workspace name from the store\n  \n", "");
+
+fs.writeFileSync(sidebarPath, content);

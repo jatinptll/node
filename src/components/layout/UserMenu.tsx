@@ -126,7 +126,7 @@ export const UserMenu = () => {
                             <ClassroomSync collapsed={false} />
                         </div>
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-2">
                         <Button
                             variant="outline"
                             onClick={() => setIsSettingsOpen(false)}

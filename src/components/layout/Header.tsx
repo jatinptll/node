@@ -44,7 +44,7 @@ export const Header = () => {
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 ml-2">
           <button
             onClick={toggleCommandPalette}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:surface-3 transition-colors border border-border"
+            className="flex items-center gap-2 px-3 h-8 rounded-md text-sm text-muted-foreground hover:text-foreground hover:surface-3 transition-colors border border-border"
           >
             <Search className="w-3.5 h-3.5" />
             <span className="text-xs font-mono hidden sm:inline">⌘K</span>
