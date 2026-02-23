@@ -45,6 +45,8 @@ interface TaskStore {
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'sortOrder' | 'subtasks' | 'labels' | 'isCompleted' | 'source'> & { title: string; listId: string; priority?: Priority; status?: TaskStatus }) => void;
   addClassroomTask: (task: Task) => void;
   addList: (list: TaskList) => void;
+  updateList: (listId: string, updates: Partial<TaskList>) => void;
+  deleteList: (listId: string) => void;
   toggleTask: (taskId: string) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
@@ -155,6 +157,32 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     // Persist to Supabase
     if (userId) {
       db.upsertList(userId, list).catch(err => console.error('Failed to save list:', err));
+    }
+  },
+
+  updateList: (listId, updates) => {
+    const userId = get().userId;
+    set((s) => ({
+      lists: s.lists.map(l => l.id === listId ? { ...l, ...updates } : l),
+    }));
+
+    // Persist to Supabase
+    if (userId) {
+      const list = get().lists.find(l => l.id === listId);
+      if (list) db.upsertList(userId, list).catch(err => console.error('Failed to update list:', err));
+    }
+  },
+
+  deleteList: (listId) => {
+    const userId = get().userId;
+    set((s) => ({
+      lists: s.lists.filter(l => l.id !== listId),
+      tasks: s.tasks.filter(t => t.listId !== listId), // delete associated tasks
+    }));
+
+    // Persist to Supabase
+    if (userId) {
+      db.deleteList(userId, listId).catch(err => console.error('Failed to delete list:', err));
     }
   },
 
