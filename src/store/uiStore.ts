@@ -33,7 +33,7 @@ function saveHiddenLists(ids: Set<string>) {
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
-  sidebarCollapsed: false,
+  sidebarCollapsed: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
   activeView: 'list',
   selectedListId: 'dashboard',
   detailPanelTaskId: null,

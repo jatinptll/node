@@ -39,6 +39,9 @@ interface TaskStore {
   clearUserData: () => void;
 
   // Task actions
+  addWorkspace: (workspace: Workspace) => void;
+  updateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
+  deleteWorkspace: (workspaceId: string) => void;
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'sortOrder' | 'subtasks' | 'labels' | 'isCompleted' | 'source'> & { title: string; listId: string; priority?: Priority; status?: TaskStatus }) => void;
   addClassroomTask: (task: Task) => void;
   addList: (list: TaskList) => void;
@@ -132,6 +135,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
+  addWorkspace: (workspace) => set((state) => ({ workspaces: [...state.workspaces, workspace] })),
+  updateWorkspace: (workspaceId, updates) => set((state) => ({
+    workspaces: state.workspaces.map(w => w.id === workspaceId ? { ...w, ...updates } : w)
+  })),
+  deleteWorkspace: (workspaceId) => set((state) => ({
+    workspaces: state.workspaces.filter(w => w.id !== workspaceId),
+    lists: state.lists.filter(l => l.workspaceId !== workspaceId),
+    tasks: state.tasks.filter(t => !state.lists.some(l => l.workspaceId === workspaceId && l.id === t.listId)),
+  })),
+
   addList: (list) => {
     const userId = get().userId;
     set((s) => {
@@ -191,7 +204,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   moveTask: (taskId, status) => {
     const userId = get().userId;
     set((s) => ({
-      tasks: s.tasks.map(t => t.id === taskId ? { ...t, status } : t),
+      tasks: s.tasks.map(t => {
+        if (t.id !== taskId) return t;
+        const isCompleted = status === 'done';
+        return {
+          ...t,
+          status,
+          isCompleted,
+          completedAt: isCompleted ? (t.completedAt || new Date().toISOString()) : undefined,
+        };
+      }),
     }));
 
     // Persist to Supabase

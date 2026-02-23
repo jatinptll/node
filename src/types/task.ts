@@ -1,7 +1,7 @@
 export type Priority = 'p1' | 'p2' | 'p3' | 'p4';
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskSource = 'manual' | 'classroom';
-export type ViewType = 'list' | 'kanban' | 'calendar' | 'matrix' | 'timeline';
+export type ViewType = 'list' | 'kanban' | 'calendar' | 'matrix';
 
 export interface Label {
   id: string;
@@ -59,7 +59,7 @@ export interface TaskList {
 export interface Workspace {
   id: string;
   name: string;
-  type: 'personal' | 'academic';
+  type: 'personal' | 'academic' | 'custom';
 }
 
 export interface KanbanColumn {

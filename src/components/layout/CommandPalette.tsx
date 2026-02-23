@@ -43,7 +43,7 @@ export const CommandPalette = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="w-full max-w-lg bg-card border border-border rounded-xl shadow-elevation-2 overflow-hidden"
+            className="w-[calc(100vw-2rem)] sm:w-full max-w-lg bg-card border border-border rounded-xl shadow-elevation-2 overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border">

@@ -4,7 +4,6 @@ import { ListView } from '@/components/views/ListView';
 import { KanbanView } from '@/components/views/KanbanView';
 import { CalendarView } from '@/components/views/CalendarView';
 import { MatrixView } from '@/components/views/MatrixView';
-import { TimelineView } from '@/components/views/TimelineView';
 import { DashboardView } from '@/components/views/DashboardView';
 
 const Index = () => {
@@ -23,7 +22,6 @@ const Index = () => {
           {activeView === 'kanban' && <KanbanView />}
           {activeView === 'calendar' && <CalendarView />}
           {activeView === 'matrix' && <MatrixView />}
-          {activeView === 'timeline' && <TimelineView />}
         </>
       )}
     </AppLayout>

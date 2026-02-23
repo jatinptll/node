@@ -1,8 +1,9 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
-import { GripVertical, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import type { Task } from '@/types/task';
 
 const priorityColors: Record<string, string> = {
@@ -42,6 +43,30 @@ export const TaskItem = ({ task }: { task: Task }) => {
   const parentList = lists.find(l => l.id === task.listId);
   const showListTag = parentList && selectedListId !== parentList.id;
 
+  const [localCompleted, setLocalCompleted] = useState(task.isCompleted);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Keep local state in sync unless we are mid-animation
+  useEffect(() => {
+    if (!isAnimating) {
+      setLocalCompleted(task.isCompleted);
+    }
+  }, [task.isCompleted, isAnimating]);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isAnimating) return;
+
+    setLocalCompleted(!localCompleted);
+    setIsAnimating(true);
+
+    // Allow bounce animation to play before unmounting/moving to completed section
+    setTimeout(() => {
+      toggleTask(task.id);
+      setIsAnimating(false);
+    }, 400);
+  };
+
   return (
     <motion.div
       layout
@@ -51,20 +76,20 @@ export const TaskItem = ({ task }: { task: Task }) => {
       className="group flex items-center gap-3 px-3 py-2.5 rounded-lg hover:surface-3 transition-colors cursor-pointer border border-transparent hover:border-border"
       onClick={() => openDetailPanel(task.id)}
     >
-      {/* Drag handle */}
-      <GripVertical className="w-4 h-4 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-colors flex-shrink-0 cursor-grab" />
-
       {/* Checkbox */}
-      <button
-        onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
+      <motion.button
+        whileTap={{ scale: 0.8 }}
+        animate={localCompleted ? { scale: [1, 1.35, 1], rotate: [0, 15, -15, 0] } : { scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        onClick={handleToggle}
         className={cn(
-          "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
-          task.isCompleted
+          "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
+          localCompleted
             ? "bg-primary border-primary"
             : "border-muted-foreground/40 hover:border-primary"
         )}
       >
-        {task.isCompleted && (
+        {localCompleted && (
           <motion.svg
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
@@ -74,12 +99,12 @@ export const TaskItem = ({ task }: { task: Task }) => {
             <motion.path d="M2 5 L4 7 L8 3" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </motion.svg>
         )}
-      </button>
+      </motion.button>
 
       {/* Title */}
       <span className={cn(
         "flex-1 text-sm truncate transition-all",
-        task.isCompleted ? "line-through text-muted-foreground" : "text-foreground"
+        localCompleted ? "line-through text-muted-foreground" : "text-foreground"
       )}>
         {task.title}
       </span>

@@ -57,12 +57,12 @@ const StatCard = ({ icon: Icon, label, value, subtitle, color, trend, delay = 0 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay }}
-        className="relative rounded-xl border border-border surface-1 p-4 hover:border-border hover:shadow-elevation-1 transition-all group overflow-hidden"
+        className="relative rounded-xl border border-border surface-1 p-3 sm:p-4 hover:border-border hover:shadow-elevation-1 transition-all group overflow-hidden"
     >
         <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-[0.04]" style={{ backgroundColor: color, filter: 'blur(20px)' }} />
-        <div className="flex items-start justify-between mb-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: color + '18' }}>
-                <Icon className="w-4 h-4" style={{ color }} />
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: color + '18' }}>
+                <Icon className="w-4 h-4 sm:w-4 sm:h-4" style={{ color }} />
             </div>
             {trend && (
                 <div className={cn("flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded-full", trend.value >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
@@ -71,9 +71,9 @@ const StatCard = ({ icon: Icon, label, value, subtitle, color, trend, delay = 0 
                 </div>
             )}
         </div>
-        <p className="text-2xl font-bold text-foreground font-mono">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-        {subtitle && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{subtitle}</p>}
+        <p className="text-xl sm:text-2xl font-bold text-foreground font-mono">{value}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{label}</p>
+        {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5">{subtitle}</p>}
     </motion.div>
 );
 
@@ -370,7 +370,7 @@ export const DashboardView = () => {
     const lists = allLists.filter(l => !hiddenListIds.has(l.id));
 
 
-    const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there';
+    const displayName = user?.user_metadata?.custom_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there';
 
     // ──── Core Metrics ────
     const stats = useMemo(() => {
@@ -461,7 +461,7 @@ export const DashboardView = () => {
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between"
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                     <div>
                         <h1 className="text-2xl font-bold text-foreground">
@@ -494,7 +494,7 @@ export const DashboardView = () => {
                 </motion.div>
 
                 {/* ──── Top Stat Cards ──── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <StatCard icon={Target} label="Total Tasks" value={stats.total} color="#7C3AED" delay={0} />
                     <StatCard icon={CheckCircle2} label="Completed" value={stats.completed} color="#10B981" delay={0.05}
                         trend={stats.weeklyTrend !== 0 ? { value: stats.weeklyTrend, label: 'vs last week' } : undefined}

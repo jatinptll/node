@@ -27,8 +27,8 @@ export const MatrixView = () => {
   });
 
   return (
-    <div className="p-4 h-full animate-fade-in">
-      <div className="grid grid-cols-2 grid-rows-2 gap-3 h-[calc(100vh-120px)]">
+    <div className="p-4 h-full overflow-y-auto animate-fade-in custom-scrollbar">
+      <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-3 h-auto md:h-[calc(100vh-120px)] pb-10 md:pb-0">
         {quadrants.map(q => {
           const qTasks = classifiedTasks.filter(q.filter);
           return (

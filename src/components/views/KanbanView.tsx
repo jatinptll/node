@@ -135,7 +135,7 @@ const KanbanColumn = ({
   return (
     <div
       className={cn(
-        "w-72 flex flex-col rounded-xl surface-1 border border-border overflow-hidden flex-shrink-0 transition-all duration-200",
+        "w-full md:flex-1 md:min-w-[280px] flex flex-col rounded-xl surface-1 border border-border overflow-hidden flex-shrink-0 transition-all duration-200",
         isOver && "ring-2 ring-primary/40 border-primary/30 bg-primary/5"
       )}
     >
@@ -155,14 +155,12 @@ const KanbanColumn = ({
         </div>
       </div>
 
-      {/* Cards */}
       <div
         ref={setNodeRef}
         className={cn(
-          "flex-1 overflow-y-auto p-2 space-y-2 min-h-[120px] transition-colors duration-200",
+          "flex-1 overflow-y-auto p-2 space-y-2 min-h-[120px] transition-colors duration-200 md:max-h-[calc(100vh-200px)]",
           isOver && "bg-primary/5"
         )}
-        style={{ maxHeight: 'calc(100vh - 200px)' }}
       >
         <AnimatePresence mode="popLayout">
           {tasks.map(task => (
@@ -263,7 +261,7 @@ export const KanbanView = () => {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex gap-4 h-full min-w-max">
+        <div className="flex flex-col md:flex-row gap-4 h-full md:w-full pb-8 md:pb-0">
           {columnConfig.map(col => {
             const tasks = tasksByStatus[col.id] || [];
             return (

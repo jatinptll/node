@@ -15,6 +15,7 @@ interface AuthState {
     initialize: () => Promise<void>;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
+    updateProfile: (newName: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -79,5 +80,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             throw error;
         }
         set({ user: null, session: null, isLoading: false });
+    },
+
+    updateProfile: async (newName: string) => {
+        set({ isLoading: true });
+        const { data, error } = await supabase.auth.updateUser({
+            data: { custom_name: newName }
+        });
+        if (error) {
+            set({ isLoading: false });
+            throw error;
+        }
+        set({ user: data.user, isLoading: false });
     },
 }));
