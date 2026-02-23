@@ -49,12 +49,12 @@ export const Sidebar = () => {
   const getUncompletedCount = (listId: string) => {
     if (listId === 'today') {
       const todayStr = new Date().toISOString().split('T')[0];
-      return tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.has(t.listId)).length;
+      return tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId)).length;
     }
     if (listId === 'upcoming') {
       const now = new Date();
       const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.has(t.listId)).length;
+      return tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.includes(t.listId)).length;
     }
     return tasks.filter(t => t.listId === listId && !t.isCompleted).length;
   };
@@ -162,7 +162,7 @@ export const Sidebar = () => {
             <div className="flex flex-col gap-2 pt-2">
               {workspaces.map(w => {
                 const wLists = lists.filter(l => l.workspaceId === w.id || (w.type === 'personal' && l.workspaceId === 'personal') || (w.type === 'academic' && l.workspaceId === 'academic'));
-                const visibleLists = wLists.filter(l => !hiddenListIds.has(l.id));
+                const visibleLists = wLists.filter(l => !hiddenListIds.includes(l.id));
                 const hiddenCount = wLists.length - visibleLists.length;
                 const isOpen = openWorkspaces[w.id] !== false; // open by default
                 const isMenuOpen = activeMenuId === w.id;
@@ -206,7 +206,7 @@ export const Sidebar = () => {
                                 </div>
                                 <div className="py-1 max-h-60 overflow-y-auto hide-scrollbar">
                                   {wLists.map((list) => {
-                                    const isHidden = hiddenListIds.has(list.id);
+                                    const isHidden = hiddenListIds.includes(list.id);
                                     return (
                                       <DropdownMenuItem
                                         key={list.id}

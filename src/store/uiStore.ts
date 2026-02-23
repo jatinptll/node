@@ -8,7 +8,7 @@ interface UIState {
   selectedListId: string;
   detailPanelTaskId: string | null;
   commandPaletteOpen: boolean;
-  hiddenListIds: Set<string>;
+  hiddenListIds: string[];
   toggleSidebar: () => void;
   setActiveView: (view: ViewType) => void;
   setSelectedListId: (id: string) => void;
@@ -18,30 +18,33 @@ interface UIState {
   toggleListVisibility: (listId: string) => void;
   isListHidden: (listId: string) => boolean;
   cleanupHiddenLists: (existingListIds: string[]) => void;
-  setHiddenListIds: (ids: Set<string>) => void;
+  setHiddenListIds: (ids: string[]) => void;
 }
 
-function loadHiddenLists(): Set<string> {
+function loadHiddenLists(): string[] {
   try {
     const stored = localStorage.getItem('node-hidden-lists');
-    return stored ? new Set(JSON.parse(stored)) : new Set();
+    return stored ? JSON.parse(stored) : [];
   } catch {
-    return new Set();
+    return [];
   }
 }
 
-function saveHiddenLists(ids: Set<string>) {
-  localStorage.setItem('node-hidden-lists', JSON.stringify(Array.from(ids)));
+function saveHiddenListsLocal(ids: string[]) {
+  localStorage.setItem('node-hidden-lists', JSON.stringify(ids));
 }
 
-
-async function syncHiddenListsToCloud(ids: Set<string>) {
-  localStorage.setItem('node-hidden-lists', JSON.stringify(Array.from(ids)));
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) {
-    await supabase.auth.updateUser({
-      data: { hidden_lists: Array.from(ids) }
-    });
+async function syncHiddenListsToCloud(ids: string[]) {
+  saveHiddenListsLocal(ids);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await supabase.auth.updateUser({
+        data: { hidden_lists: ids }
+      });
+    }
+  } catch (err) {
+    console.error('Failed to sync hidden lists to cloud:', err);
   }
 }
 
@@ -59,34 +62,28 @@ export const useUIStore = create<UIState>((set, get) => ({
   closeDetailPanel: () => set({ detailPanelTaskId: null }),
   toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
   toggleListVisibility: (listId) => {
-    set((s) => {
-      const next = new Set(s.hiddenListIds);
-      if (next.has(listId)) {
-        next.delete(listId);
-      } else {
-        next.add(listId);
-      }
-      syncHiddenListsToCloud(next);
-      return { hiddenListIds: next };
-    });
+    const current = get().hiddenListIds;
+    let next: string[];
+    if (current.includes(listId)) {
+      next = current.filter(id => id !== listId);
+    } else {
+      next = [...current, listId];
+    }
+    syncHiddenListsToCloud(next);
+    set({ hiddenListIds: next });
   },
   setHiddenListIds: (ids) => {
-    saveHiddenLists(ids);
+    saveHiddenListsLocal(ids);
     set({ hiddenListIds: ids });
   },
-  isListHidden: (listId) => get().hiddenListIds.has(listId),
+  isListHidden: (listId) => get().hiddenListIds.includes(listId),
   // Remove hidden IDs that don't correspond to any existing list
   cleanupHiddenLists: (existingListIds) => {
     const existingSet = new Set(existingListIds);
     const current = get().hiddenListIds;
-    const cleaned = new Set<string>();
-    for (const id of current) {
-      if (existingSet.has(id)) {
-        cleaned.add(id);
-      }
-    }
-    if (cleaned.size !== current.size) {
-      saveHiddenLists(cleaned);
+    const cleaned = current.filter(id => existingSet.has(id));
+    if (cleaned.length !== current.length) {
+      saveHiddenListsLocal(cleaned);
       set({ hiddenListIds: cleaned });
     }
   },

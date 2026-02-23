@@ -255,15 +255,15 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const hiddenListIds = useUIStore.getState().hiddenListIds;
     if (listId === 'today') {
       const todayStr = new Date().toISOString().split('T')[0];
-      return get().tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.has(t.listId));
+      return get().tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId));
     }
     if (listId === 'upcoming') {
       const now = new Date();
       const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return get().tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.has(t.listId));
+      return get().tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.includes(t.listId));
     }
     if (listId === 'completed') {
-      return get().tasks.filter(t => t.isCompleted && !hiddenListIds.has(t.listId));
+      return get().tasks.filter(t => t.isCompleted && !hiddenListIds.includes(t.listId));
     }
     return get().tasks.filter(t => t.listId === listId);
   },

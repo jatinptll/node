@@ -60,7 +60,7 @@ const AppContent = () => {
       // Restore hidden lists from cloud
       const cloudHidden = user.user_metadata?.hidden_lists;
       if (Array.isArray(cloudHidden)) {
-        useUIStore.getState().setHiddenListIds(new Set(cloudHidden));
+        useUIStore.getState().setHiddenListIds(cloudHidden);
       }
     }
   }, [user, isInitialized, loadUserData, loadSyncState]);

@@ -366,8 +366,8 @@ export const DashboardView = () => {
     const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'all'>('week');
 
     // Filter out tasks and lists from hidden subjects
-    const tasks = allTasks.filter(t => !hiddenListIds.has(t.listId));
-    const lists = allLists.filter(l => !hiddenListIds.has(l.id));
+    const tasks = allTasks.filter(t => !hiddenListIds.includes(t.listId));
+    const lists = allLists.filter(l => !hiddenListIds.includes(l.id));
 
 
     const displayName = user?.user_metadata?.custom_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there';
