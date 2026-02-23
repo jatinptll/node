@@ -136,8 +136,8 @@ export const EditWorkspacesDialog = ({ open, onOpenChange }: { open: boolean, on
                         </Button>
                       </div>
                     ))}
-                    
-                    <div className="flex items-center gap-2 pl-2 mt-2">
+
+                    <div className="flex items-center gap-2 mt-2">
                       <Input
                         placeholder={`Add page to ${w.name}...`}
                         className="h-7 text-xs bg-transparent"

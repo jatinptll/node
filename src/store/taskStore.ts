@@ -59,7 +59,7 @@ let nextId = 100;
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   workspaces: defaultWorkspaces,
-  lists: defaultLists,
+  lists: [], // Start empty to prevent ghosting before DB loads
   tasks: defaultTasks,
   sections: [],
   columns: defaultColumns,
