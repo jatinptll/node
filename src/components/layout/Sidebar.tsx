@@ -134,9 +134,10 @@ export const Sidebar = () => {
                   key={item.id}
                   onClick={() => handleItemClick(item.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all",
+                    "flex items-center rounded-md text-sm transition-all",
+                    sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "w-full gap-3 px-3 py-2",
                     isActive
-                      ? "bg-primary/20 text-primary font-medium"
+                      ? "text-primary font-medium"
                       : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                   )}
                 >
@@ -270,8 +271,9 @@ export const Sidebar = () => {
                                     key={list.id}
                                     onClick={() => handleItemClick(list.id)}
                                     className={cn(
-                                      "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all",
-                                      isActive ? "bg-primary/20 text-primary font-medium" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                                      "flex items-center rounded-md text-sm transition-all",
+                                      sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "w-full gap-3 px-3 py-2",
+                                      isActive ? "text-primary font-medium" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                                     )}
                                   >
                                     <div className="w-3 h-3 rounded-md flex-shrink-0" style={{ backgroundColor: list.color }} />
