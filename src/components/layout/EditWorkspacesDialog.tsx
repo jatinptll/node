@@ -105,14 +105,12 @@ export const EditWorkspacesDialog = ({ open, onOpenChange }: { open: boolean, on
                       <>
                         <span className="font-mono font-medium text-sm flex-1">{w.name}</span>
                         <div className="flex items-center gap-1">
-                          {w.type === 'custom' && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                              setEditingId(w.id);
-                              setEditName(w.name);
-                            }}>
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                            setEditingId(w.id);
+                            setEditName(w.name);
+                          }}>
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
                           {(w.type !== 'personal' && w.type !== 'academic') && (
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDeleteWorkspace(w.id, w.name)}>
                               <Trash2 className="w-3.5 h-3.5" />
