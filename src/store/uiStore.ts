@@ -70,7 +70,10 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { hiddenListIds: next };
     });
   },
-  setHiddenListIds: (ids) => set({ hiddenListIds: ids }),
+  setHiddenListIds: (ids) => {
+    saveHiddenLists(ids);
+    set({ hiddenListIds: ids });
+  },
   isListHidden: (listId) => get().hiddenListIds.has(listId),
   // Remove hidden IDs that don't correspond to any existing list
   cleanupHiddenLists: (existingListIds) => {
