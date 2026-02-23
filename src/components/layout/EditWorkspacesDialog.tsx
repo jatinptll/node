@@ -9,11 +9,21 @@ import { toast } from 'sonner';
 const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
 
 export const EditWorkspacesDialog = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
-  const { workspaces, lists, updateWorkspace, addWorkspace, deleteWorkspace, addList, deleteList } = useTaskStore();
+  const { workspaces, lists, updateWorkspace, addWorkspace, deleteWorkspace, addList, deleteList, updateList } = useTaskStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editingListId, setEditingListId] = useState<string | null>(null);
+  const [editListName, setEditListName] = useState('');
+
   const [newName, setNewName] = useState('');
   const [newListPage, setNewListPage] = useState<Record<string, string>>({});
+
+  const handleSaveEditList = (id: string) => {
+    if (!editListName.trim()) return;
+    updateList(id, { name: editListName.trim() });
+    toast.success('Page updated');
+    setEditingListId(null);
+  };
 
   const handleSaveEdit = (id: string) => {
     if (!editName.trim()) return;
@@ -125,13 +135,38 @@ export const EditWorkspacesDialog = ({ open, onOpenChange }: { open: boolean, on
                   <div className="pl-6 space-y-1">
                     {wLists.map(list => (
                       <div key={list.id} className="flex items-center justify-between p-1.5 rounded-lg border border-transparent hover:surface-2 group">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: list.color }} />
-                          <span className="text-xs text-muted-foreground">{list.name}</span>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteList(list.id, list.name)}>
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        {editingListId === list.id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              value={editListName}
+                              onChange={e => setEditListName(e.target.value)}
+                              className="h-7 text-xs font-mono"
+                              autoFocus
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveEditList(list.id)}
+                            />
+                            <Button size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => handleSaveEditList(list.id)}>
+                              <Check className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: list.color }} />
+                              <span className="text-xs text-muted-foreground">{list.name}</span>
+                            </div>
+                            <div className="flex items-center opacity-0 group-hover:opacity-100">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                setEditingListId(list.id);
+                                setEditListName(list.name);
+                              }}>
+                                <Edit2 className="w-3 h-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteList(list.id, list.name)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
 
