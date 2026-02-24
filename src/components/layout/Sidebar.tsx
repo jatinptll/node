@@ -17,6 +17,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -180,8 +181,8 @@ export const Sidebar = () => {
                       <div className="flex items-center gap-2">
                         {wLists.length > 0 && (
                           <div className="relative workspace-menu-container">
-                            <DropdownMenu open={isMenuOpen} onOpenChange={(open) => setActiveMenuId(open ? w.id : null)}>
-                              <DropdownMenuTrigger asChild>
+                            <Popover open={isMenuOpen} onOpenChange={(open) => setActiveMenuId(open ? w.id : null)}>
+                              <PopoverTrigger asChild>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -191,9 +192,9 @@ export const Sidebar = () => {
                                 >
                                   <MoreHorizontal className="w-3.5 h-3.5" />
                                 </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                className="w-56"
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-56 p-0"
                                 align="end"
                                 side={isMobile ? "bottom" : "right"}
                                 sideOffset={isMobile ? 8 : 16}
@@ -232,8 +233,8 @@ export const Sidebar = () => {
                                     );
                                   })}
                                 </div>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         )}
 
