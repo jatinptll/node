@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/uiStore';
 import { useTaskStore } from '@/store/taskStore';
@@ -34,18 +34,6 @@ export const Sidebar = () => {
   const [editWorkspacesOpen, setEditWorkspacesOpen] = useState(false);
 
 
-
-
-  // Close menu on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!(e.target as Element).closest('.workspace-menu-container')) {
-        setActiveMenuId(null);
-      }
-    };
-    if (activeMenuId) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [activeMenuId]);
 
   const getUncompletedCount = (listId: string) => {
     if (listId === 'today') {
