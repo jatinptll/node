@@ -6,10 +6,11 @@ import { useAuthStore } from '@/store/authStore';
 import {
     CheckCircle2, Circle, Clock, AlertTriangle, TrendingUp, Target,
     Flame, CalendarDays, BookOpen, ArrowUpRight, ChevronRight,
-    BarChart3, Zap, Trophy, Star, ArrowDown, ArrowUp
+    BarChart3, Zap, Trophy, Star, ArrowDown, ArrowUp, SlidersHorizontal, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Priority } from '@/types/task';
+import { QuickAdd } from '@/components/layout/QuickAdd';
 
 /* ──────────────── Helpers ──────────────── */
 
@@ -353,6 +354,42 @@ const WeeklySparkline = ({ tasks }: { tasks: Task[] }) => {
     );
 };
 
+/* ──────────────── Time Range Dropdown ──────────────── */
+
+const TimeRangeDropdown = ({ selected, onChange }: { selected: 'week' | 'month' | 'all'; onChange: (v: 'week' | 'month' | 'all') => void }) => {
+    const [open, setOpen] = useState(false);
+    const labels = { week: 'Week', month: 'Month', all: 'All' };
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-1.5 px-3 h-8 rounded-lg border border-border text-xs font-mono text-muted-foreground hover:text-foreground hover:surface-3 transition-colors"
+            >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>{labels[selected]}</span>
+                <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+            </button>
+            {open && (
+                <div className="absolute z-20 right-0 mt-1 w-28 rounded-md border border-border bg-popover shadow-elevation-2 py-1">
+                    {(['week', 'month', 'all'] as const).map(range => (
+                        <button
+                            key={range}
+                            onClick={() => { onChange(range); setOpen(false); }}
+                            className={cn(
+                                "w-full px-3 py-1.5 text-xs font-mono text-left hover:bg-surface-2 transition-colors capitalize",
+                                selected === range ? "text-primary font-medium" : "text-muted-foreground"
+                            )}
+                        >
+                            {labels[range]}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 /* ══════════════════════════════════════════
    MAIN DASHBOARD
    ══════════════════════════════════════════ */
@@ -475,21 +512,9 @@ export const DashboardView = () => {
                                     : 'All caught up! 🎉'}
                         </p>
                     </div>
-                    <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 text-xs font-mono">
-                        {(['week', 'month', 'all'] as const).map(range => (
-                            <button
-                                key={range}
-                                onClick={() => setSelectedTimeRange(range)}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-md transition-all capitalize",
-                                    selectedTimeRange === range
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                {range}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-2">
+                        <QuickAdd variant="dashboard" />
+                        <TimeRangeDropdown selected={selectedTimeRange} onChange={setSelectedTimeRange} />
                     </div>
                 </motion.div>
 

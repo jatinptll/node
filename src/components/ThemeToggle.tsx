@@ -32,7 +32,7 @@ export const ThemeToggle = () => {
     return (
         <button
             onClick={toggleTheme}
-            className="relative flex items-center justify-center w-8 h-8 ml-2 rounded-md hover:surface-3 text-muted-foreground hover:text-foreground transition-colors overflow-hidden border border-border"
+            className="relative flex items-center justify-center h-8 w-8 sm:w-8 rounded-md hover:surface-3 text-muted-foreground hover:text-foreground transition-colors overflow-hidden border border-border"
             title={`Current theme: ${theme === "system" ? "System Default" : theme === "light" ? "Light" : "Dark"}`}
         >
             <motion.div

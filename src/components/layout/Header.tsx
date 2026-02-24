@@ -5,6 +5,7 @@ import type { ViewType } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { UserMenu } from './UserMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { QuickAdd } from './QuickAdd';
 
 const views: { id: ViewType; icon: typeof List; label: string }[] = [
   { id: 'list', icon: List, label: 'List' },
@@ -41,7 +42,7 @@ export const Header = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 ml-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
           <button
             onClick={toggleCommandPalette}
             className="flex items-center gap-2 px-3 h-8 rounded-md text-sm text-muted-foreground hover:text-foreground hover:surface-3 transition-colors border border-border"
@@ -49,6 +50,8 @@ export const Header = () => {
             <Search className="w-3.5 h-3.5" />
             <span className="text-xs font-mono hidden sm:inline">⌘K</span>
           </button>
+
+          {!isDashboard && <QuickAdd variant="header" />}
 
           {/* View switcher on large screens */}
           {!isDashboard && (
@@ -71,10 +74,8 @@ export const Header = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <ThemeToggle />
-            <UserMenu />
-          </div>
+          <ThemeToggle />
+          <UserMenu />
         </div>
       </div>
 
