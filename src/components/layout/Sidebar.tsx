@@ -208,13 +208,10 @@ export const Sidebar = () => {
                                   {wLists.map((list) => {
                                     const isHidden = hiddenListIds.includes(list.id);
                                     return (
-                                      <DropdownMenuItem
+                                      <div
                                         key={list.id}
-                                        onSelect={(e) => {
-                                          e.preventDefault();
-                                          toggleListVisibility(list.id);
-                                        }}
-                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-2 transition-colors cursor-pointer"
+                                        onClick={() => toggleListVisibility(list.id)}
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-2 transition-colors cursor-pointer rounded-sm"
                                       >
                                         <div
                                           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -231,7 +228,7 @@ export const Sidebar = () => {
                                         ) : (
                                           <Eye className="w-3.5 h-3.5 text-primary" />
                                         )}
-                                      </DropdownMenuItem>
+                                      </div>
                                     );
                                   })}
                                 </div>
