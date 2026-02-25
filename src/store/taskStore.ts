@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Task, TaskList, Workspace, Section, KanbanColumn, Priority, TaskStatus } from '@/types/task';
 import * as db from '@/lib/database';
 import { useUIStore } from '@/store/uiStore';
+import { toast } from 'sonner';
 
 const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
 
@@ -24,6 +25,26 @@ const defaultLists: TaskList[] = [
 ];
 
 const defaultTasks: Task[] = [];
+
+/**
+ * Helper: persist to Supabase and show a toast if it fails.
+ * Returns true on success, false on failure.
+ */
+async function persistToDB(
+  operation: () => Promise<void>,
+  errorLabel: string
+): Promise<boolean> {
+  try {
+    await operation();
+    return true;
+  } catch (err) {
+    console.error(`${errorLabel}:`, err);
+    toast.error('Sync failed', {
+      description: `${errorLabel}. Your change may not be saved. Try reloading.`,
+    });
+    return false;
+  }
+}
 
 interface TaskStore {
   workspaces: Workspace[];
@@ -98,6 +119,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       useUIStore.getState().cleanupHiddenLists(finalLists.map(l => l.id));
     } catch (err) {
       console.error('Failed to load user data:', err);
+      toast.error('Failed to load data', {
+        description: 'Could not fetch your data from the server. Please reload.',
+      });
       set({ userId, isLoaded: true });
     }
   },
@@ -129,11 +153,21 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       dueDate: partial.dueDate,
       createdAt: new Date().toISOString(),
     };
+
+    // Optimistically update UI
     set((s) => ({ tasks: [task, ...s.tasks] }));
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
-      db.upsertTask(userId, task).catch(err => console.error('Failed to save task:', err));
+      persistToDB(
+        () => db.upsertTask(userId, task),
+        'Failed to save task'
+      ).then(success => {
+        if (!success) {
+          // Rollback: remove the task from local state
+          set((s) => ({ tasks: s.tasks.filter(t => t.id !== task.id) }));
+        }
+      });
     }
   },
 
@@ -146,95 +180,152 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
     // Persist to Supabase
     if (userId) {
-      db.upsertTask(userId, task).catch(err => console.error('Failed to save classroom task:', err));
+      persistToDB(
+        () => db.upsertTask(userId, task),
+        'Failed to save classroom task'
+      );
     }
   },
 
   addWorkspace: (workspace) => {
     const userId = get().userId;
+    const prevWorkspaces = get().workspaces;
     set((state) => ({ workspaces: [...state.workspaces, workspace] }));
+
     if (userId) {
-      db.upsertWorkspace(userId, workspace, get().workspaces.length - 1).catch(err =>
-        console.error('Failed to save workspace:', err)
-      );
+      persistToDB(
+        () => db.upsertWorkspace(userId, workspace, get().workspaces.length - 1),
+        'Failed to save workspace'
+      ).then(success => {
+        if (!success) {
+          set({ workspaces: prevWorkspaces });
+        }
+      });
     }
   },
+
   updateWorkspace: (workspaceId, updates) => {
     const userId = get().userId;
+    const prevWorkspaces = get().workspaces;
     set((state) => ({
       workspaces: state.workspaces.map(w => w.id === workspaceId ? { ...w, ...updates } : w)
     }));
+
     if (userId) {
       const workspace = get().workspaces.find(w => w.id === workspaceId);
       if (workspace) {
-        db.upsertWorkspace(userId, workspace).catch(err =>
-          console.error('Failed to update workspace:', err)
-        );
+        persistToDB(
+          () => db.upsertWorkspace(userId, workspace),
+          'Failed to update workspace'
+        ).then(success => {
+          if (!success) {
+            set({ workspaces: prevWorkspaces });
+          }
+        });
       }
     }
   },
+
   deleteWorkspace: (workspaceId) => {
     const userId = get().userId;
+    const prevState = { workspaces: get().workspaces, lists: get().lists, tasks: get().tasks };
     const listsToDelete = get().lists.filter(l => l.workspaceId === workspaceId);
+
     set((state) => ({
       workspaces: state.workspaces.filter(w => w.id !== workspaceId),
       lists: state.lists.filter(l => l.workspaceId !== workspaceId),
       tasks: state.tasks.filter(t => !listsToDelete.some(l => l.id === t.listId)),
     }));
+
     if (userId) {
-      // Delete workspace, its lists, and tasks from DB
-      db.deleteWorkspaceFromDB(userId, workspaceId).catch(err =>
-        console.error('Failed to delete workspace:', err)
-      );
-      for (const list of listsToDelete) {
-        db.deleteList(userId, list.id).catch(err =>
-          console.error('Failed to delete list:', err)
-        );
-      }
+      persistToDB(
+        async () => {
+          await db.deleteWorkspaceFromDB(userId, workspaceId);
+          for (const list of listsToDelete) {
+            await db.deleteList(userId, list.id);
+          }
+        },
+        'Failed to delete workspace'
+      ).then(success => {
+        if (!success) {
+          set(prevState);
+        }
+      });
     }
   },
 
   addList: (list) => {
     const userId = get().userId;
+    const prevLists = get().lists;
+
     set((s) => {
       if (s.lists.some((l) => l.id === list.id)) return s;
       return { lists: [...s.lists, list] };
     });
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
-      db.upsertList(userId, list).catch(err => console.error('Failed to save list:', err));
+      persistToDB(
+        () => db.upsertList(userId, list),
+        'Failed to save list'
+      ).then(success => {
+        if (!success) {
+          set({ lists: prevLists });
+        }
+      });
     }
   },
 
   updateList: (listId, updates) => {
     const userId = get().userId;
+    const prevLists = get().lists;
+
     set((s) => ({
       lists: s.lists.map(l => l.id === listId ? { ...l, ...updates } : l),
     }));
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
       const list = get().lists.find(l => l.id === listId);
-      if (list) db.upsertList(userId, list).catch(err => console.error('Failed to update list:', err));
+      if (list) {
+        persistToDB(
+          () => db.upsertList(userId, list),
+          'Failed to update list'
+        ).then(success => {
+          if (!success) {
+            set({ lists: prevLists });
+          }
+        });
+      }
     }
   },
 
   deleteList: (listId) => {
     const userId = get().userId;
+    const prevState = { lists: get().lists, tasks: get().tasks };
+
     set((s) => ({
       lists: s.lists.filter(l => l.id !== listId),
-      tasks: s.tasks.filter(t => t.listId !== listId), // delete associated tasks
+      tasks: s.tasks.filter(t => t.listId !== listId),
     }));
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
-      db.deleteList(userId, listId).catch(err => console.error('Failed to delete list:', err));
+      persistToDB(
+        () => db.deleteList(userId, listId),
+        'Failed to delete list'
+      ).then(success => {
+        if (!success) {
+          set(prevState);
+        }
+      });
     }
   },
 
   toggleTask: (taskId) => {
     const userId = get().userId;
+    const prevTasks = get().tasks;
+
     set((s) => ({
       tasks: s.tasks.map(t => t.id === taskId ? {
         ...t,
@@ -244,40 +335,71 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       } : t),
     }));
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
       const task = get().tasks.find(t => t.id === taskId);
-      if (task) db.upsertTask(userId, task).catch(err => console.error('Failed to update task:', err));
+      if (task) {
+        persistToDB(
+          () => db.upsertTask(userId, task),
+          'Failed to update task'
+        ).then(success => {
+          if (!success) {
+            set({ tasks: prevTasks });
+          }
+        });
+      }
     }
   },
 
   updateTask: (taskId, updates) => {
     const userId = get().userId;
+    const prevTasks = get().tasks;
+
     set((s) => ({
       tasks: s.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t),
     }));
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
       const task = get().tasks.find(t => t.id === taskId);
-      if (task) db.upsertTask(userId, task).catch(err => console.error('Failed to update task:', err));
+      if (task) {
+        persistToDB(
+          () => db.upsertTask(userId, task),
+          'Failed to update task'
+        ).then(success => {
+          if (!success) {
+            set({ tasks: prevTasks });
+          }
+        });
+      }
     }
   },
 
   deleteTask: (taskId) => {
     const userId = get().userId;
+    const prevTasks = get().tasks;
+
     set((s) => ({
       tasks: s.tasks.filter(t => t.id !== taskId),
     }));
 
-    // Delete from Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
-      db.deleteTaskFromDB(userId, taskId).catch(err => console.error('Failed to delete task:', err));
+      persistToDB(
+        () => db.deleteTaskFromDB(userId, taskId),
+        'Failed to delete task'
+      ).then(success => {
+        if (!success) {
+          set({ tasks: prevTasks });
+        }
+      });
     }
   },
 
   moveTask: (taskId, status) => {
     const userId = get().userId;
+    const prevTasks = get().tasks;
+
     set((s) => ({
       tasks: s.tasks.map(t => {
         if (t.id !== taskId) return t;
@@ -291,10 +413,19 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }),
     }));
 
-    // Persist to Supabase
+    // Persist to Supabase — rollback on failure
     if (userId) {
       const task = get().tasks.find(t => t.id === taskId);
-      if (task) db.upsertTask(userId, task).catch(err => console.error('Failed to update task:', err));
+      if (task) {
+        persistToDB(
+          () => db.upsertTask(userId, task),
+          'Failed to update task'
+        ).then(success => {
+          if (!success) {
+            set({ tasks: prevTasks });
+          }
+        });
+      }
     }
   },
 
