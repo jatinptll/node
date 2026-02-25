@@ -1,17 +1,14 @@
 /**
  * Database Service - Syncs local Zustand state with Supabase
- * Uses untyped client to avoid issues with generated types not matching schema
+ * Uses the shared supabase client to ensure consistent auth state across the app
  */
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import type { Task, TaskList, Workspace } from '@/types/task';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-// Untyped client for database operations (types.ts doesn't include our tables yet)
-const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: { storage: localStorage, persistSession: true, autoRefreshToken: true },
-});
+// Cast to `any` because generated Database types have empty Tables definition
+// but the actual DB schema has these tables. This avoids type errors while
+// keeping a single shared client for consistent auth state.
+const db: any = supabase;
 
 // ============================================
 // Workspaces

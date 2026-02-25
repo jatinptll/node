@@ -79,6 +79,18 @@ const AppContent = () => {
     }
   }, [user, isInitialized, loadUserData, loadSyncState]);
 
+  // Re-fetch data when a tab regains visibility (cross-tab sync)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user && isInitialized) {
+        loadUserData(user.id);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, isInitialized, loadUserData]);
+
   return (
     <BrowserRouter>
       <Routes>
