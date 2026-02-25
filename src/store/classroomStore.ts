@@ -88,12 +88,45 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
     },
 
     syncNow: async () => {
-        // Get the Google OAuth token from the Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        const providerToken = session?.provider_token;
+        // ── Tier 1: Try the cached provider_token from current session ──
+        let { data: { session } } = await supabase.auth.getSession();
+        let providerToken = session?.provider_token;
 
+        // ── Tier 2: If expired, try refreshing the session (uses provider_refresh_token) ──
         if (!providerToken) {
-            set({ syncError: 'No Google token available. Please sign out and sign in again with Google.' });
+            const { data, error } = await supabase.auth.refreshSession();
+            if (!error && data.session?.provider_token) {
+                session = data.session;
+                providerToken = session.provider_token;
+            }
+        }
+
+        // ── Tier 3: If still no token, do a silent re-auth via OAuth redirect ──
+        if (!providerToken) {
+            // Trigger a fresh Google OAuth sign-in.
+            // Since the user is already signed in to Google, this will be fast —
+            // Google will auto-select the account and redirect back immediately.
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    scopes: [
+                        'https://www.googleapis.com/auth/classroom.courses.readonly',
+                        'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+                        'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+                    ].join(' '),
+                    redirectTo: window.location.origin,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'none', // Silent re-auth — no user interaction needed
+                    },
+                },
+            });
+
+            if (error) {
+                set({ syncError: 'Google session expired. Click "Sync Classroom" again after the page reloads.' });
+            }
+            // The page will redirect to Google and back. After redirect, the
+            // provider_token will be fresh and the next sync attempt will work.
             return { newTasks: 0, updatedCourses: 0, removedCourses: 0 };
         }
 
