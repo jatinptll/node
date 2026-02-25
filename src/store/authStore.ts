@@ -45,12 +45,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 isInitialized: true,
             });
 
-            // Listen for auth changes
+            // Listen for auth changes (skip INITIAL_SESSION — we handle init above)
             supabase.auth.onAuthStateChange(async (_event, session) => {
+                if (_event === 'INITIAL_SESSION') return;
                 let user = session?.user ?? null;
-                if (user && _event !== 'INITIAL_SESSION') {
-                  const { data: { user: freshUser } } = await supabase.auth.getUser();
-                  if (freshUser) user = freshUser;
+                if (user) {
+                    const { data: { user: freshUser } } = await supabase.auth.getUser();
+                    if (freshUser) user = freshUser;
                 }
                 set({
                     user,
@@ -88,13 +89,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signOut: async () => {
-        set({ isLoading: true });
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            set({ isLoading: false });
-            throw error;
+        // Clear state immediately so UI redirects to login right away
+        set({ user: null, session: null, isLoading: false, isInitialized: true });
+
+        // Then tell Supabase to clear the session (scope: 'local' avoids
+        // network dependency — works even when Supabase server is slow/down)
+        try {
+            await supabase.auth.signOut({ scope: 'local' });
+        } catch (error) {
+            console.error('Supabase signOut error (non-blocking):', error);
         }
-        set({ user: null, session: null, isLoading: false });
     },
 
     updateProfile: async (newName: string) => {

@@ -68,19 +68,31 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   loadUserData: async (userId: string) => {
     try {
-      const [lists, tasks] = await Promise.all([
+      const [workspaces, lists, tasks] = await Promise.all([
+        db.fetchUserWorkspaces(userId),
         db.fetchUserLists(userId),
         db.fetchUserTasks(userId),
       ]);
 
+      const finalWorkspaces = workspaces.length > 0 ? workspaces : defaultWorkspaces;
       const finalLists = lists.length > 0 ? lists : defaultLists;
 
       set({
+        workspaces: finalWorkspaces,
         lists: finalLists,
         tasks,
         userId,
         isLoaded: true,
       });
+
+      // If user had no workspaces saved yet, seed the defaults to DB
+      if (workspaces.length === 0) {
+        for (let i = 0; i < defaultWorkspaces.length; i++) {
+          db.upsertWorkspace(userId, defaultWorkspaces[i], i).catch(err =>
+            console.error('Failed to seed default workspace:', err)
+          );
+        }
+      }
 
       // Cleanup hidden list IDs that reference lists that no longer exist
       useUIStore.getState().cleanupHiddenLists(finalLists.map(l => l.id));
@@ -92,6 +104,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   clearUserData: () => {
     set({
+      workspaces: defaultWorkspaces,
       lists: defaultLists,
       tasks: [],
       userId: null,
@@ -137,15 +150,49 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  addWorkspace: (workspace) => set((state) => ({ workspaces: [...state.workspaces, workspace] })),
-  updateWorkspace: (workspaceId, updates) => set((state) => ({
-    workspaces: state.workspaces.map(w => w.id === workspaceId ? { ...w, ...updates } : w)
-  })),
-  deleteWorkspace: (workspaceId) => set((state) => ({
-    workspaces: state.workspaces.filter(w => w.id !== workspaceId),
-    lists: state.lists.filter(l => l.workspaceId !== workspaceId),
-    tasks: state.tasks.filter(t => !state.lists.some(l => l.workspaceId === workspaceId && l.id === t.listId)),
-  })),
+  addWorkspace: (workspace) => {
+    const userId = get().userId;
+    set((state) => ({ workspaces: [...state.workspaces, workspace] }));
+    if (userId) {
+      db.upsertWorkspace(userId, workspace, get().workspaces.length - 1).catch(err =>
+        console.error('Failed to save workspace:', err)
+      );
+    }
+  },
+  updateWorkspace: (workspaceId, updates) => {
+    const userId = get().userId;
+    set((state) => ({
+      workspaces: state.workspaces.map(w => w.id === workspaceId ? { ...w, ...updates } : w)
+    }));
+    if (userId) {
+      const workspace = get().workspaces.find(w => w.id === workspaceId);
+      if (workspace) {
+        db.upsertWorkspace(userId, workspace).catch(err =>
+          console.error('Failed to update workspace:', err)
+        );
+      }
+    }
+  },
+  deleteWorkspace: (workspaceId) => {
+    const userId = get().userId;
+    const listsToDelete = get().lists.filter(l => l.workspaceId === workspaceId);
+    set((state) => ({
+      workspaces: state.workspaces.filter(w => w.id !== workspaceId),
+      lists: state.lists.filter(l => l.workspaceId !== workspaceId),
+      tasks: state.tasks.filter(t => !listsToDelete.some(l => l.id === t.listId)),
+    }));
+    if (userId) {
+      // Delete workspace, its lists, and tasks from DB
+      db.deleteWorkspaceFromDB(userId, workspaceId).catch(err =>
+        console.error('Failed to delete workspace:', err)
+      );
+      for (const list of listsToDelete) {
+        db.deleteList(userId, list.id).catch(err =>
+          console.error('Failed to delete list:', err)
+        );
+      }
+    }
+  },
 
   addList: (list) => {
     const userId = get().userId;

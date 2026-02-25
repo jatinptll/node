@@ -395,12 +395,14 @@ const TimeRangeDropdown = ({ selected, onChange }: { selected: 'week' | 'month' 
    ══════════════════════════════════════════ */
 
 export const DashboardView = () => {
-    const { tasks: allTasks, lists: allLists } = useTaskStore();
+    const { tasks: allTasks, lists: allLists, workspaces } = useTaskStore();
     const { setSelectedListId } = useUIStore();
     const { openDetailPanel } = useUIStore();
     const { hiddenListIds } = useUIStore();
     const { user } = useAuthStore();
     const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'all'>('week');
+    const [listDomainFilter, setListDomainFilter] = useState<string>('all');
+    const [listDomainOpen, setListDomainOpen] = useState(false);
 
     // Filter out tasks and lists from hidden subjects
     const tasks = allTasks.filter(t => !hiddenListIds.includes(t.listId));
@@ -532,7 +534,7 @@ export const DashboardView = () => {
                 </div>
 
                 {/* ──── Middle Row ──── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     {/* Completion Rate + Ring */}
                     <motion.div
@@ -583,27 +585,6 @@ export const DashboardView = () => {
                             ))}
                         </div>
                     </motion.div>
-
-                    {/* Weekly Activity */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="rounded-xl border border-border surface-1 p-5"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">This Week</h3>
-                            <div className="flex items-center gap-1.5">
-                                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                                <span className="text-xs font-mono text-orange-400">{stats.streak} day streak</span>
-                            </div>
-                        </div>
-                        <WeeklySparkline tasks={tasks} />
-                        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">Completed this week</span>
-                            <span className="text-sm font-bold font-mono text-foreground">{stats.completedThisWeek}</span>
-                        </div>
-                    </motion.div>
                 </div>
 
                 {/* ──── Bottom Row ──── */}
@@ -649,35 +630,75 @@ export const DashboardView = () => {
                             transition={{ delay: 0.4 }}
                             className="rounded-xl border border-border surface-1 p-5"
                         >
-                            <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-4">Tasks by List</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Tasks by List</h3>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setListDomainOpen(!listDomainOpen)}
+                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border text-[10px] font-mono text-muted-foreground hover:text-foreground hover:surface-3 transition-colors"
+                                    >
+                                        <span>{listDomainFilter === 'all' ? 'All Domains' : workspaces.find(w => w.id === listDomainFilter)?.name || 'All Domains'}</span>
+                                        <ChevronDown className={cn("w-3 h-3 transition-transform", listDomainOpen && "rotate-180")} />
+                                    </button>
+                                    {listDomainOpen && (
+                                        <div className="absolute z-20 right-0 mt-1 w-36 rounded-md border border-border bg-popover shadow-elevation-2 py-1">
+                                            <button
+                                                onClick={() => { setListDomainFilter('all'); setListDomainOpen(false); }}
+                                                className={cn(
+                                                    "w-full px-3 py-1.5 text-[10px] font-mono text-left hover:bg-surface-2 transition-colors",
+                                                    listDomainFilter === 'all' ? "text-primary font-medium" : "text-muted-foreground"
+                                                )}
+                                            >
+                                                All Domains
+                                            </button>
+                                            {workspaces.map(w => (
+                                                <button
+                                                    key={w.id}
+                                                    onClick={() => { setListDomainFilter(w.id); setListDomainOpen(false); }}
+                                                    className={cn(
+                                                        "w-full px-3 py-1.5 text-[10px] font-mono text-left hover:bg-surface-2 transition-colors",
+                                                        listDomainFilter === w.id ? "text-primary font-medium" : "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {w.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <div className="space-y-2">
-                                {stats.listStats.slice(0, 6).map((list, i) => {
-                                    const pct = list.total > 0 ? Math.round((list.completed / list.total) * 100) : 0;
-                                    return (
-                                        <button
-                                            key={list.id}
-                                            onClick={() => setSelectedListId(list.id)}
-                                            className="w-full flex items-center gap-3 px-2 py-1.5 rounded-lg hover:surface-3 transition-colors group"
-                                        >
-                                            <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: list.color }} />
-                                            <span className="text-xs text-foreground flex-1 text-left truncate">{list.name}</span>
-                                            <div className="w-16 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    className="h-full rounded-full"
-                                                    style={{ backgroundColor: list.color }}
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${pct}%` }}
-                                                    transition={{ duration: 0.8, delay: 0.4 + i * 0.06 }}
-                                                />
-                                            </div>
-                                            <span className="text-[10px] font-mono text-muted-foreground w-10 text-right">{pct}%</span>
-                                            <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition" />
-                                        </button>
+                                {(() => {
+                                    const filtered = listDomainFilter === 'all'
+                                        ? stats.listStats
+                                        : stats.listStats.filter(l => l.workspaceId === listDomainFilter);
+                                    return filtered.length > 0 ? filtered.slice(0, 8).map((list, i) => {
+                                        const pct = list.total > 0 ? Math.round((list.completed / list.total) * 100) : 0;
+                                        return (
+                                            <button
+                                                key={list.id}
+                                                onClick={() => setSelectedListId(list.id)}
+                                                className="w-full flex items-center gap-3 px-2 py-1.5 rounded-lg hover:surface-3 transition-colors group"
+                                            >
+                                                <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: list.color }} />
+                                                <span className="text-xs text-foreground flex-1 text-left truncate">{list.name}</span>
+                                                <div className="w-16 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        className="h-full rounded-full"
+                                                        style={{ backgroundColor: list.color }}
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${pct}%` }}
+                                                        transition={{ duration: 0.8, delay: 0.4 + i * 0.06 }}
+                                                    />
+                                                </div>
+                                                <span className="text-[10px] font-mono text-muted-foreground w-10 text-right">{pct}%</span>
+                                                <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition" />
+                                            </button>
+                                        );
+                                    }) : (
+                                        <p className="text-xs text-muted-foreground text-center py-4">No tasks in this domain</p>
                                     );
-                                })}
-                                {stats.listStats.length === 0 && (
-                                    <p className="text-xs text-muted-foreground text-center py-4">No tasks yet</p>
-                                )}
+                                })()}
                             </div>
                         </motion.div>
 

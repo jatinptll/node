@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useTaskStore } from "@/store/taskStore";
 import { useClassroomStore } from "@/store/classroomStore";
 import { useUIStore } from "@/store/uiStore";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import LoginPage from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -57,11 +58,24 @@ const AppContent = () => {
       loadUserData(user.id);
       loadSyncState(user.id);
 
-      // Restore hidden lists from cloud
-      const cloudHidden = user.user_metadata?.hidden_lists;
-      if (Array.isArray(cloudHidden)) {
-        useUIStore.getState().setHiddenListIds(cloudHidden);
-      }
+      // Always fetch fresh user metadata from server for hidden lists
+      // (the user object may come from cached session with stale metadata)
+      const restoreHiddenLists = async () => {
+        try {
+          const { data: { user: freshUser } } = await supabase.auth.getUser();
+          const cloudHidden = freshUser?.user_metadata?.hidden_lists;
+          if (Array.isArray(cloudHidden)) {
+            useUIStore.getState().setHiddenListIds(cloudHidden);
+          }
+        } catch (err) {
+          // Fallback: try from the user object we already have
+          const cloudHidden = user.user_metadata?.hidden_lists;
+          if (Array.isArray(cloudHidden)) {
+            useUIStore.getState().setHiddenListIds(cloudHidden);
+          }
+        }
+      };
+      restoreHiddenLists();
     }
   }, [user, isInitialized, loadUserData, loadSyncState]);
 

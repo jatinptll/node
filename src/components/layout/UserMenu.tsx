@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useClassroomStore } from '@/store/classroomStore';
+import { useUIStore } from '@/store/uiStore';
 import { LogOut, User, Settings, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ClassroomSync } from './ClassroomSync';
@@ -40,6 +41,7 @@ export const UserMenu = () => {
         try {
             clearUserData();
             clearClassroomState();
+            useUIStore.getState().setHiddenListIds([]);
             await signOut();
             toast.success('Signed out successfully');
         } catch (err) {

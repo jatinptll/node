@@ -3,7 +3,7 @@
  * Uses untyped client to avoid issues with generated types not matching schema
  */
 import { createClient } from '@supabase/supabase-js';
-import type { Task, TaskList } from '@/types/task';
+import type { Task, TaskList, Workspace } from '@/types/task';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -12,6 +12,50 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { storage: localStorage, persistSession: true, autoRefreshToken: true },
 });
+
+// ============================================
+// Workspaces
+// ============================================
+
+export async function fetchUserWorkspaces(userId: string): Promise<Workspace[]> {
+    const { data, error } = await db
+        .from('workspaces')
+        .select('*')
+        .eq('user_id', userId)
+        .order('sort_order');
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        type: row.type,
+    }));
+}
+
+export async function upsertWorkspace(userId: string, workspace: Workspace, sortOrder: number = 0): Promise<void> {
+    const { error } = await db
+        .from('workspaces')
+        .upsert({
+            id: workspace.id,
+            user_id: userId,
+            name: workspace.name,
+            type: workspace.type,
+            sort_order: sortOrder,
+        }, { onConflict: 'id,user_id' });
+
+    if (error) throw error;
+}
+
+export async function deleteWorkspaceFromDB(userId: string, workspaceId: string): Promise<void> {
+    const { error } = await db
+        .from('workspaces')
+        .delete()
+        .eq('id', workspaceId)
+        .eq('user_id', userId);
+
+    if (error) throw error;
+}
 
 // ============================================
 // Task Lists
