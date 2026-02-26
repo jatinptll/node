@@ -122,17 +122,31 @@ const AppContent = () => {
     }
   }, [user, isInitialized, loadUserData, loadSyncState]);
 
-  // Re-fetch data when a tab regains visibility (cross-tab sync)
+  // Re-fetch data when a tab regains visibility (cross-tab sync) and handle bfcache (back button)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user && isInitialized) {
+        initialize(); // Re-verify auth just to be absolutely sure
         loadUserData(user.id);
       }
     };
 
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        // We're returning from bfcache (back button)
+        // Force an immediate re-check of the session
+        initialize();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, isInitialized, loadUserData]);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [user, isInitialized, loadUserData, initialize]);
 
   return (
     <Routes>

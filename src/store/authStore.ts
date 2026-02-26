@@ -89,16 +89,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signOut: async () => {
-        // Clear state immediately so UI redirects to login right away
+        set({ isLoading: true });
+
+        // Tell Supabase to clear the session globally! 
+        // Removing { scope: 'local' } ensures the backend revokes the refresh token.
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error('Supabase global signOut error:', error);
+        }
+
+        // Clear local state
         set({ user: null, session: null, isLoading: false, isInitialized: true });
 
-        // Then tell Supabase to clear the session (scope: 'local' avoids
-        // network dependency — works even when Supabase server is slow/down)
-        try {
-            await supabase.auth.signOut({ scope: 'local' });
-        } catch (error) {
-            console.error('Supabase signOut error (non-blocking):', error);
-        }
+        // Forcefully clear session storage and local storage fallbacks
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+
+        // 1. Dumps all JS memory/React state instantly.
+        // 2. Uses replace() so the current history entry is overwritten, preventing back navigation.
+        window.location.replace('/login');
     },
 
     updateProfile: async (newName: string) => {
