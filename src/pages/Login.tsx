@@ -106,9 +106,9 @@ const LoginPage = () => {
                         {/* Features */}
                         <div className="space-y-3 mb-8">
                             {[
-                                { emoji: '📋', text: 'Organize tasks with lists, kanban & calendar views' },
-                                { emoji: '🎓', text: 'Auto-sync assignments from Google Classroom' },
-                                { emoji: '⚡', text: 'Priority matrix & timeline for productivity' },
+                                { emoji: '📋', text: 'Organize work with clarity and structure' },
+                                { emoji: '🎓', text: 'Understand your capacity and performance patterns' },
+                                { emoji: '⚡', text: 'Make smarter decisions about what to do next' },
                             ].map((feature, i) => (
                                 <motion.div
                                     key={i}
