@@ -117,7 +117,7 @@ export const ClassroomSync = ({ collapsed }: { collapsed: boolean }) => {
                         <RefreshCw className="w-4 h-4" />
                     )}
                     <span className="flex-1 text-left text-xs font-mono uppercase tracking-wider">
-                        {isSyncing ? 'Syncing...' : syncedCourses.length === 0 ? 'Sync Classroom' : 'Sync Now'}
+                        {isSyncing ? 'Syncing...' : syncedCourses.length === 0 ? 'Connect Classroom' : 'Sync Now'}
                     </span>
                     {lastSyncAt && !isSyncing && (
                         <span className="text-[10px] text-muted-foreground">{formatLastSync()}</span>

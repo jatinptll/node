@@ -79,16 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                scopes: [
-                    'https://www.googleapis.com/auth/classroom.courses.readonly',
-                    'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
-                    'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
-                ].join(' '),
                 redirectTo: window.location.origin,
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent',
-                },
             },
         });
         if (error) {

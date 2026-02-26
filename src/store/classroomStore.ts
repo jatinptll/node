@@ -11,6 +11,25 @@ import { useTaskStore } from './taskStore';
 import { useUIStore } from './uiStore';
 import * as db from '@/lib/database';
 
+declare global {
+    interface Window {
+        google?: {
+            accounts?: {
+                oauth2?: {
+                    initTokenClient: (config: {
+                        client_id: string;
+                        scope: string;
+                        callback: (response: { access_token?: string; error?: string; expires_in: number }) => void;
+                    }) => { requestAccessToken: (options?: { prompt?: string }) => void };
+                };
+            };
+        };
+    }
+}
+
+let globalGoogleToken: string | null = null;
+let tokenExpiresAt: number = 0;
+
 interface SyncedCourse {
     id: string;
     name: string;
@@ -88,53 +107,57 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
     },
 
     syncNow: async () => {
-        // ── Tier 1: Try the cached provider_token from current session ──
-        let { data: { session } } = await supabase.auth.getSession();
-        let providerToken = session?.provider_token;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return { newTasks: 0, updatedCourses: 0, removedCourses: 0 };
+        const userId = session.user.id;
+        const isConnectedState = get().isConnected;
 
-        // ── Tier 2: If expired, try refreshing the session (uses provider_refresh_token) ──
-        if (!providerToken) {
-            const { data, error } = await supabase.auth.refreshSession();
-            if (!error && data.session?.provider_token) {
-                session = data.session;
-                providerToken = session.provider_token;
+        // Try to obtain or refresh the token using Google GIS implicit flow
+        const getAccessToken = () => new Promise<string>((resolve, reject) => {
+            if (globalGoogleToken && Date.now() < tokenExpiresAt) {
+                resolve(globalGoogleToken);
+                return;
             }
-        }
 
-        // ── Tier 3: If still no token, do a silent re-auth via OAuth redirect ──
-        if (!providerToken) {
-            // Trigger a fresh Google OAuth sign-in.
-            // Since the user is already signed in to Google, this will be fast —
-            // Google will auto-select the account and redirect back immediately.
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    scopes: [
-                        'https://www.googleapis.com/auth/classroom.courses.readonly',
-                        'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
-                        'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
-                    ].join(' '),
-                    redirectTo: window.location.origin,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'none', // Silent re-auth — no user interaction needed
-                    },
-                },
+            if (!window.google?.accounts?.oauth2) {
+                reject(new Error('Google Identity Services not loaded. Please be connected to the internet and refresh the page.'));
+                return;
+            }
+
+            const client = window.google.accounts.oauth2.initTokenClient({
+                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                scope: [
+                    'https://www.googleapis.com/auth/classroom.courses.readonly',
+                    'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+                    'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+                ].join(' '),
+                callback: (response: { access_token?: string; error?: string; expires_in: number }) => {
+                    if (response.error !== undefined) {
+                        reject(new Error(response.error));
+                    } else if (response.access_token) {
+                        globalGoogleToken = response.access_token;
+                        // Assuming 1 hour expiration, subtract 5 mins for safety
+                        tokenExpiresAt = Date.now() + (response.expires_in - 300) * 1000;
+                        resolve(response.access_token);
+                    } else {
+                        reject(new Error('No access token received.'));
+                    }
+                }
             });
 
-            if (error) {
-                set({ syncError: 'Google session expired. Click "Sync Classroom" again after the page reloads.' });
+            // If it's explicitly their first time connecting, force account selection
+            if (!isConnectedState) {
+                client.requestAccessToken({ prompt: 'select_account' });
+            } else {
+                client.requestAccessToken({ prompt: '' });
             }
-            // The page will redirect to Google and back. After redirect, the
-            // provider_token will be fresh and the next sync attempt will work.
-            return { newTasks: 0, updatedCourses: 0, removedCourses: 0 };
-        }
+        });
 
-        const userId = session.user.id;
-
-        set({ isSyncing: true, syncError: null, isConnected: true });
+        set({ isSyncing: true, syncError: null });
 
         try {
+            const providerToken = await getAccessToken();
+            set({ isConnected: true });
             const classroomData = await fetchAllClassroomData(providerToken);
             const { syncedCourses, importedCourseworkIds } = get();
 
