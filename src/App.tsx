@@ -129,31 +129,26 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Component to clean the URL of Supabase OAuth tokens using React Router
-const AuthTokenCleaner = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    // Check if the current URL has the Supabase access_token fragment
-    if (location.hash && location.hash.includes('access_token=')) {
-      // Immediately replace the URL, dropping the hash fragment completely
-      navigate(location.pathname + location.search, { replace: true });
-    }
-  }, [location, navigate]);
-
-  return null;
-};
+// The auth token cleaning logic is now safely integrated inside AppContent
 
 const AppContent = () => {
   const { initialize, user, isInitialized } = useAuthStore();
   const { loadUserData } = useTaskStore();
   const { loadSyncState } = useClassroomStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Initialize auth on mount
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Clean the URL hash safely ONLY after Supabase has been cleanly initialized
+  useEffect(() => {
+    if (isInitialized && location.hash.includes("access_token=")) {
+      navigate(location.pathname + location.search, { replace: true });
+    }
+  }, [isInitialized, location, navigate]);
 
   // Load user data when user changes
   useEffect(() => {
@@ -195,21 +190,18 @@ const AppContent = () => {
   }, [user, isInitialized, loadUserData]);
 
   return (
-    <BrowserRouter>
-      <AuthTokenCleaner />
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Index />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Index />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
@@ -217,9 +209,11 @@ const App = () => (
   <ThemeProvider defaultTheme="system" enableSystem attribute="class">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AppContent />
+        <BrowserRouter>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>
