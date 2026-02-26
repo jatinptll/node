@@ -27,7 +27,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center overflow-hidden">
         <div
           className="relative flex flex-col items-center justify-center w-full h-full"
-          style={{ background: "radial-gradient(circle at center, hsla(263, 70%, 58%, 0.08) 0%, transparent 60%)" }}
         >
           {/* Logo container with breathe animation */}
           <motion.div
@@ -84,9 +83,15 @@ const AppContent = () => {
   }, [initialize]);
 
   // Clean the URL hash safely ONLY after Supabase has been cleanly initialized
+  // to avoid exposing the access_token in the browser address bar.
   useEffect(() => {
     if (isInitialized && location.hash.includes("access_token=")) {
-      navigate(location.pathname + location.search, { replace: true });
+      // Clear the hash from react-router's state
+      navigate({
+        pathname: location.pathname,
+        search: location.search,
+        hash: ''
+      }, { replace: true });
     }
   }, [isInitialized, location, navigate]);
 

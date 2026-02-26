@@ -7,13 +7,21 @@
     <title>Node Loader</title>
     <style>
         :root {
-            --background: hsl(240, 10%, 4%);
-            --foreground: hsl(214, 32%, 91%);
+            --background: #ffffff;
+            --foreground: hsl(240, 10%, 4%);
             --primary: hsl(263, 70%, 58%);
             --purple-400: hsl(263, 86%, 77%);
-            --border: hsl(252, 20%, 22%);
+            --border: hsl(240, 6%, 90%);
             --glow-sm: 0 0 10px hsla(263, 70%, 58%, 0.15);
             --glow-purple: 0 0 20px hsla(263, 70%, 58%, 0.3);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: hsl(240, 10%, 4%);
+                --foreground: hsl(214, 32%, 91%);
+                --border: hsl(252, 20%, 22%);
+            }
         }
 
         body {
@@ -34,8 +42,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Faint ambient light behind everything */
-            background: radial-gradient(circle at center, hsla(263, 70%, 58%, 0.08) 0%, transparent 60%);
             padding: 60px;
         }
 
