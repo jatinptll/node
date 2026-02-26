@@ -151,7 +151,7 @@ const LoginPage = () => {
                         </motion.button>
 
                         <p className="text-center text-[11px] text-muted-foreground mt-4">
-                            Sign in to sync your data across devices &amp; connect Google Classroom
+                            Sign in to sync your data and activate your work intelligence layer
                         </p>
                     </div>
                 </div>
