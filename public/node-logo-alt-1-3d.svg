@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" fill="none">
+  <defs>
+    <g id="letters">
+      <!-- n -->
+      <rect x="80" y="80" width="40" height="120" />
+      <rect x="120" y="80" width="40" height="24" />
+      <rect x="160" y="80" width="40" height="120" />
+  
+      <!-- o -->
+      <rect x="220" y="80" width="40" height="120" />
+      <rect x="260" y="80" width="40" height="24" />
+      <rect x="260" y="176" width="40" height="24" />
+      <rect x="300" y="80" width="40" height="120" />
+  
+      <!-- d -->
+      <rect x="360" y="80" width="40" height="120" />
+      <rect x="400" y="80" width="40" height="24" />
+      <rect x="400" y="176" width="40" height="24" />
+      <rect x="440" y="32" width="40" height="168" />
+  
+      <!-- e -->
+      <rect x="500" y="80" width="40" height="120" />
+      <rect x="540" y="80" width="40" height="24" />
+      <rect x="540" y="128" width="40" height="24" />
+      <rect x="540" y="176" width="80" height="24" />
+      <rect x="580" y="80" width="40" height="72" />
+    </g>
+  </defs>
+
+  <!-- Extruded shadow layer offset down and right -->
+  <use href="#letters" x="12" y="12" fill="#20103b" stroke="#20103b" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" />
+  
+  <!-- Base background block for the letters -->
+  <use href="#letters" fill="#4d1b9b" stroke="#4d1b9b" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" />
+  
+  <!-- The letters themselves in a bright pop of color -->
+  <use href="#letters" fill="#c4a5f9" />
+</svg>

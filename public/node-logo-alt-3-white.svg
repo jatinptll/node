@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" fill="none">
+  <defs>
+    <g id="letters">
+      <!-- n -->
+      <rect x="80" y="80" width="40" height="120" />
+      <rect x="120" y="80" width="40" height="24" />
+      <rect x="160" y="80" width="40" height="120" />
+  
+      <!-- o -->
+      <rect x="220" y="80" width="40" height="120" />
+      <rect x="260" y="80" width="40" height="24" />
+      <rect x="260" y="176" width="40" height="24" />
+      <rect x="300" y="80" width="40" height="120" />
+  
+      <!-- d -->
+      <rect x="360" y="80" width="40" height="120" />
+      <rect x="400" y="80" width="40" height="24" />
+      <rect x="400" y="176" width="40" height="24" />
+      <rect x="440" y="32" width="40" height="168" />
+  
+      <!-- e -->
+      <rect x="500" y="80" width="40" height="120" />
+      <rect x="540" y="80" width="40" height="24" />
+      <rect x="540" y="128" width="40" height="24" />
+      <rect x="540" y="176" width="80" height="24" />
+      <rect x="580" y="80" width="40" height="72" />
+    </g>
+  </defs>
+
+  <!-- Big solid background block created by giving the letters an enormous stroke
+       This merges all the components into one continuous pill shape -->
+  <use href="#letters" fill="#844be1" stroke="#844be1" stroke-width="48" stroke-linejoin="round" />
+  
+  <!-- The letters knocked out purely in bright white, creating a stencil effect -->
+  <use href="#letters" fill="#ffffff" />
+</svg>

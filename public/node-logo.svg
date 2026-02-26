@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="64 16 568 200" fill="none">
+  <defs>
+    <!-- Vibrant top-to-bottom gradient similar to the reference image -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b483f9" />
+      <stop offset="100%" stop-color="#662cd1" />
+    </linearGradient>
+
+    <!-- The exact block geometry of the letters -->
+    <g id="letters">
+      <!-- n -->
+      <rect x="80" y="80" width="40" height="120" />
+      <rect x="120" y="80" width="40" height="24" />
+      <rect x="160" y="80" width="40" height="120" />
+  
+      <!-- o -->
+      <rect x="220" y="80" width="40" height="120" />
+      <rect x="260" y="80" width="40" height="24" />
+      <rect x="260" y="176" width="40" height="24" />
+      <rect x="300" y="80" width="40" height="120" />
+  
+      <!-- d -->
+      <rect x="360" y="80" width="40" height="120" />
+      <rect x="400" y="80" width="40" height="24" />
+      <rect x="400" y="176" width="40" height="24" />
+      <rect x="440" y="32" width="40" height="168" />
+  
+      <!-- e -->
+      <rect x="500" y="80" width="40" height="120" />
+      <rect x="540" y="80" width="40" height="24" />
+      <rect x="540" y="128" width="40" height="24" />
+      <rect x="540" y="176" width="80" height="24" />
+      <rect x="580" y="80" width="40" height="72" />
+    </g>
+  </defs>
+
+  <!-- Background layer: Uses a dark purple with a thick, rounded stroke. 
+       This perfectly envelopes the letters, joining them across the gaps 
+       and creating thick rounded corners naturally. -->
+  <use href="#letters" fill="#20103b" stroke="#20103b" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" />
+  
+  <!-- Foreground layer: The gradient-filled blocky letters -->
+  <use href="#letters" fill="url(#textGrad)" />
+</svg>

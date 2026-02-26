@@ -89,28 +89,24 @@ export const Sidebar = () => {
         {/* Logo */}
         <div
           onClick={() => setSelectedListId('dashboard')}
-          className="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0 cursor-pointer hover:bg-surface-2 transition-colors"
+          className={cn(
+            "flex items-center h-[57px] border-b border-border flex-shrink-0 cursor-pointer hover:bg-surface-2 transition-colors",
+            sidebarCollapsed ? "justify-center" : "px-5"
+          )}
         >
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-purple-800 flex-shrink-0 glow-purple">
-            <Diamond className="w-4 h-4 text-white" />
-          </div>
-          <AnimatePresence>
-            {!sidebarCollapsed && (
+          {sidebarCollapsed ? (
+            <img src="/favicon.svg" alt="Node" className="h-8 w-8 object-contain" />
+          ) : (
+            <AnimatePresence>
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="flex flex-col min-w-0 flex-1"
               >
-                <span className="font-mono font-bold text-base text-foreground tracking-wide leading-tight">
-                  Node
-                </span>
-                <span className="text-[10px] text-muted-foreground font-mono tracking-wider uppercase leading-tight">
-                  Task Manager
-                </span>
+                <img src="/node-logo.svg" alt="Node" className="h-10 w-auto object-left object-contain" />
               </motion.div>
-            )}
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
         </div>
 
         {/* Nav */}
@@ -378,7 +374,7 @@ export const Sidebar = () => {
             </button>
           )}
         </div>
-      </motion.aside>
+      </motion.aside >
       <EditWorkspacesDialog open={editWorkspacesOpen} onOpenChange={setEditWorkspacesOpen} />
       <GoalDialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen} />
     </>
