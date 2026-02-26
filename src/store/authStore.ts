@@ -30,6 +30,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const { data: { session } } = await supabase.auth.getSession();
             let user = session?.user ?? null;
 
+            // Clean up the URL by removing the OAuth tokens from the hash fragment
+            if (window.location.hash && window.location.hash.includes('access_token=')) {
+                window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            }
+
             if (user) {
                 // Fetch fresh user data from server to get the latest metadata
                 const { data: { user: freshUser } } = await supabase.auth.getUser();
@@ -47,6 +52,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             // Listen for auth changes (skip INITIAL_SESSION — we handle init above)
             supabase.auth.onAuthStateChange(async (_event, session) => {
+                if (_event === 'SIGNED_IN' && window.location.hash.includes('access_token=')) {
+                    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+                }
+
                 if (_event === 'INITIAL_SESSION') return;
                 let user = session?.user ?? null;
                 if (user) {
