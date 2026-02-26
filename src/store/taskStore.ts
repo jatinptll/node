@@ -164,6 +164,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       estimatedMinutes: partial.estimatedMinutes,
       deferralCount: 0,
       energyTag: undefined,
+      goalId: partial.goalId,
       createdAt: new Date().toISOString(),
     };
 
