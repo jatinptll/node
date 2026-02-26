@@ -28,51 +28,7 @@
 - **Drag & Drop**: `@dnd-kit/core`
 - **Routing**: React Router
 
-## 🚀 Getting Started
 
-### Prerequisites
-- Node.js (v18+)
-- A Supabase project
-- A Google Cloud project (for Classroom APIs and OAuth)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/jatinptll/node.git
-   cd node
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables**
-   Create a `.env` file in the root directory (use `.env.example` as a template):
-   ```env
-   VITE_SUPABASE_PROJECT_ID="your-project-id"
-   VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
-   VITE_SUPABASE_URL="https://your-project.supabase.co"
-   VITE_GOOGLE_CLIENT_ID="your-google-client-id"
-   ```
-
-4. **Run Database Migrations**
-   Copy the SQL from `supabase/migrations/001_initial_schema.sql` and run it in your Supabase SQL Editor to set up tables and RLS policies.
-
-5. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-
-## 🔐 Google Classroom & Authentication Setup
-
-1. **Supabase**: Go to Authentication -> Providers -> Google and enable it.
-2. **Google Cloud Console**:
-   - Create OAuth 2.0 Client credentials.
-   - Add your redirect URI: `https://<your-project>.supabase.co/auth/v1/callback`
-   - Enable the **Google Classroom API** inside the Google Cloud library.
-   - Ensure you request the correct scopes in auth (`https://www.googleapis.com/auth/classroom.courses.readonly`, `https://www.googleapis.com/auth/classroom.coursework.me.readonly`).
 
 ## 📄 License
 
