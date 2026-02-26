@@ -46,9 +46,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           </motion.div>
 
           {/* Sleek indeterminate progress bar */}
-          <div className="w-[80px] h-[2px] bg-border rounded-sm overflow-hidden relative shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+          <div className="w-[140px] h-[6px] bg-border rounded-full overflow-hidden relative shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
             <motion.div
-              className="absolute top-0 bottom-0 bg-primary rounded-sm shadow-[0_0_8px_hsl(var(--primary))]"
+              className="absolute top-0 bottom-0 bg-primary rounded-full shadow-[0_0_8px_hsl(var(--primary))]"
               animate={{
                 left: ["-50%", "20%", "110%"],
                 width: ["30%", "60%", "30%"]
