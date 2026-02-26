@@ -25,97 +25,37 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center overflow-hidden">
-        {/* Animated background glow */}
-        <motion.div
-          className="absolute inset-0 z-0 opacity-30 pointer-events-none flex items-center justify-center"
-          animate={{
-            background: [
-              "radial-gradient(circle at center, rgba(124, 58, 237, 0.15) 0%, transparent 40%)",
-              "radial-gradient(circle at center, rgba(124, 58, 237, 0.3) 0%, transparent 60%)",
-              "radial-gradient(circle at center, rgba(124, 58, 237, 0.15) 0%, transparent 40%)"
-            ]
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        <div className="relative z-10 flex flex-col items-center gap-8">
-          {/* Logo container with float animation */}
+        <div
+          className="relative flex flex-col items-center justify-center w-full h-full"
+          style={{ background: "radial-gradient(circle at center, hsla(263, 70%, 58%, 0.08) 0%, transparent 60%)" }}
+        >
+          {/* Logo container with breathe animation */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative"
+            className="relative w-[140px] flex justify-center mb-8 z-10"
+            animate={{
+              opacity: [0.85, 1, 0.85],
+              scale: [0.98, 1.02, 0.98],
+              filter: [
+                "drop-shadow(0 0 8px hsla(263, 70%, 58%, 0.15))",
+                "drop-shadow(0 0 16px hsla(263, 70%, 58%, 0.4))",
+                "drop-shadow(0 0 8px hsla(263, 70%, 58%, 0.15))"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Outer rotating ring */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-4 rounded-full border border-purple-500/20 border-t-purple-500/80"
-            />
-
-            {/* Inner rotating ring (opposite direction) */}
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-2 rounded-full border border-purple-400/20 border-b-purple-400/80"
-            />
-
-            {/* Core logo block */}
-            <motion.div
-              animate={{
-                y: [-5, 5, -5]
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center shadow-[0_0_30px_rgba(124,58,237,0.4)] backdrop-blur-xl border border-white/10 relative overflow-hidden"
-            >
-              {/* Shimmer effect across the block */}
-              <motion.div
-                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                animate={{ translateX: ["-100%", "200%"] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
-              />
-              <Diamond className="w-8 h-8 text-white relative z-10 drop-shadow-md" />
-            </motion.div>
+            <img src="/node-logo.svg" alt="Node Logo" className="w-full h-auto" />
           </motion.div>
 
-          {/* Loading text with wave animation */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex space-x-1">
-              {['L', 'O', 'A', 'D', 'I', 'N', 'G'].map((letter, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: i * 0.1,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    repeatDelay: 2
-                  }}
-                  className="text-sm tracking-[0.2em] font-medium text-foreground/80 font-mono"
-                >
-                  {letter}
-                </motion.span>
-              ))}
-            </div>
-
-            {/* Progress line */}
-            <div className="w-48 h-[2px] bg-secondary/50 rounded-full overflow-hidden mt-1 relative">
-              <motion.div
-                className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full"
-                initial={{ width: "0%", x: "0%" }}
-                animate={{
-                  width: ["0%", "40%", "100%", "100%"],
-                  x: ["0%", "0%", "0%", "100%"]
-                }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-            </div>
+          {/* Sleek indeterminate progress bar */}
+          <div className="w-[80px] h-[2px] bg-border rounded-sm overflow-hidden relative shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+            <motion.div
+              className="absolute top-0 bottom-0 bg-primary rounded-sm shadow-[0_0_8px_hsl(var(--primary))]"
+              animate={{
+                left: ["-50%", "20%", "110%"],
+                width: ["30%", "60%", "30%"]
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", times: [0, 0.5, 1] }}
+            />
           </div>
         </div>
       </div>
