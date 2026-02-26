@@ -48,6 +48,7 @@ export interface Task {
   deferralCount?: number;
   energyTag?: EnergyTag;
   goalId?: string;
+  classroomCourseworkId?: string;
   createdAt: string;
 }
 
@@ -68,6 +69,7 @@ export interface TaskList {
   sortOrder: number;
   isAcademic?: boolean;
   courseName?: string;
+  classroomCourseId?: string;
 }
 
 export interface Workspace {

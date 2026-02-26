@@ -76,6 +76,7 @@ export async function fetchUserLists(userId: string): Promise<TaskList[]> {
         sortOrder: row.sort_order,
         isAcademic: row.is_academic,
         courseName: row.course_name,
+        classroomCourseId: row.classroom_course_id,
     }));
 }
 
@@ -92,6 +93,7 @@ export async function upsertList(userId: string, list: TaskList): Promise<void> 
             sort_order: list.sortOrder,
             is_academic: list.isAcademic || false,
             course_name: list.courseName || null,
+            classroom_course_id: list.classroomCourseId || null,
         }, { onConflict: 'id,user_id' });
 
     if (error) throw error;
@@ -142,6 +144,7 @@ export async function fetchUserTasks(userId: string): Promise<Task[]> {
         deferralCount: row.deferral_count,
         energyTag: row.energy_tag,
         goalId: row.goal_id,
+        classroomCourseworkId: row.classroom_coursework_id,
         createdAt: row.created_at,
     }));
 }
@@ -172,6 +175,7 @@ export async function upsertTask(userId: string, task: Task): Promise<void> {
             deferral_count: task.deferralCount || 0,
             energy_tag: task.energyTag || null,
             goal_id: task.goalId || null,
+            classroom_coursework_id: task.classroomCourseworkId || null,
             created_at: task.createdAt,
         }, { onConflict: 'id,user_id' });
 
