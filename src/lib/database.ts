@@ -3,7 +3,7 @@
  * Uses the shared supabase client to ensure consistent auth state across the app
  */
 import { supabase } from '@/integrations/supabase/client';
-import type { Task, TaskList, Workspace } from '@/types/task';
+import type { Task, TaskList, Workspace, Goal } from '@/types/task';
 
 // Cast to `any` because generated Database types have empty Tables definition
 // but the actual DB schema has these tables. This avoids type errors while
@@ -138,6 +138,10 @@ export async function fetchUserTasks(userId: string): Promise<Task[]> {
         source: row.source,
         labels: row.labels || [],
         subtasks: row.subtasks || [],
+        estimatedMinutes: row.estimated_minutes,
+        deferralCount: row.deferral_count,
+        energyTag: row.energy_tag,
+        goalId: row.goal_id,
         createdAt: row.created_at,
     }));
 }
@@ -164,6 +168,10 @@ export async function upsertTask(userId: string, task: Task): Promise<void> {
             source: task.source,
             labels: task.labels,
             subtasks: task.subtasks,
+            estimated_minutes: task.estimatedMinutes || null,
+            deferral_count: task.deferralCount || 0,
+            energy_tag: task.energyTag || null,
+            goal_id: task.goalId || null,
             created_at: task.createdAt,
         }, { onConflict: 'id,user_id' });
 
@@ -229,4 +237,51 @@ export async function fetchProfile(userId: string) {
 
     if (error && error.code !== 'PGRST116') throw error;
     return data;
+}
+
+// ============================================
+// Goals
+// ============================================
+
+export async function fetchUserGoals(userId: string): Promise<Goal[]> {
+    const { data, error } = await db
+        .from('goals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('sort_order');
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        timeframe: row.timeframe,
+        targetDate: row.target_date,
+        sortOrder: row.sort_order,
+    }));
+}
+
+export async function upsertGoal(userId: string, goal: Goal): Promise<void> {
+    const { error } = await db
+        .from('goals')
+        .upsert({
+            id: goal.id,
+            user_id: userId,
+            title: goal.title,
+            timeframe: goal.timeframe,
+            target_date: goal.targetDate || null,
+            sort_order: goal.sortOrder,
+        }, { onConflict: 'id' });
+
+    if (error) throw error;
+}
+
+export async function deleteGoal(userId: string, goalId: string): Promise<void> {
+    const { error } = await db
+        .from('goals')
+        .delete()
+        .eq('id', goalId)
+        .eq('user_id', userId);
+
+    if (error) throw error;
 }

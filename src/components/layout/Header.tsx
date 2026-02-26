@@ -19,10 +19,15 @@ export const Header = () => {
   const { lists } = useTaskStore();
 
   const isDashboard = selectedListId === 'dashboard';
+  const isToday = selectedListId === 'today';
 
   const currentList = lists.find(l => l.id === selectedListId);
+  const currentGoal = useTaskStore(s => s.goals.find(g => g.id === selectedListId));
+  const isGoal = !!currentGoal;
+
   const pageTitle = isDashboard ? 'Dashboard'
     : currentList?.name
+    || currentGoal?.title
     || (selectedListId === 'today' ? 'Today' : selectedListId === 'upcoming' ? 'Upcoming'
       : selectedListId === 'completed' ? 'Completed' : selectedListId);
 
@@ -51,10 +56,10 @@ export const Header = () => {
             <span className="text-xs font-mono hidden sm:inline">⌘K</span>
           </button>
 
-          {!isDashboard && <QuickAdd variant="header" />}
+          {!isDashboard && !isGoal && !isToday && <QuickAdd variant="header" />}
 
           {/* View switcher on large screens */}
-          {!isDashboard && (
+          {!isDashboard && !isGoal && !isToday && (
             <div className="hidden sm:flex items-center border border-border rounded-lg p-0.5">
               {views.map(v => (
                 <button
@@ -80,7 +85,7 @@ export const Header = () => {
       </div>
 
       {/* Sub-bar for view switcher on mobile */}
-      {!isDashboard && (
+      {!isDashboard && !isGoal && !isToday && (
         <div className="h-12 border-t border-border flex items-center px-4 sm:hidden bg-background overflow-x-auto hide-scrollbar">
           <div className="flex items-center border border-border rounded-lg p-0.5 mx-auto w-full max-w-sm justify-between">
             {views.map(v => (

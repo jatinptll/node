@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
-import { X, BookOpen, Calendar, Flag, Trash2 } from 'lucide-react';
+import { X, BookOpen, Calendar, Flag, Trash2, Diamond } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import type { Priority } from '@/types/task';
+import type { Priority, EnergyTag } from '@/types/task';
+import { ENERGY_TAGS } from '@/lib/energy_tags';
+import { TimeEstimateSelector } from './TimeEstimateSelector';
 
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
   { value: 'p1', label: 'Urgent', color: 'bg-destructive' },
@@ -15,7 +17,7 @@ const priorityOptions: { value: Priority; label: string; color: string }[] = [
 ];
 
 export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
-  const { tasks, toggleTask, updateTask, deleteTask, lists } = useTaskStore();
+  const { tasks, toggleTask, updateTask, deleteTask, lists, goals } = useTaskStore();
   const { closeDetailPanel } = useUIStore();
   const isMobile = useIsMobile();
   const task = tasks.find(t => t.id === taskId);
@@ -148,36 +150,84 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
           <div className="space-y-3">
             <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Details</h3>
 
-            {/* Due date */}
-            <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="date"
-                value={task.dueDate || ''}
-                onChange={e => updateTask(task.id, { dueDate: e.target.value || undefined })}
-                className="bg-transparent text-sm text-foreground border border-border rounded-md px-2 py-1 outline-none focus:border-primary/40"
-              />
+            {/* Due date & Time Estimate */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <input
+                  type="date"
+                  value={task.dueDate || ''}
+                  onChange={e => updateTask(task.id, { dueDate: e.target.value || undefined })}
+                  className="bg-transparent text-sm text-foreground border border-border rounded-md px-2 py-1 outline-none focus:border-primary/40"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <TimeEstimateSelector
+                  value={task.estimatedMinutes}
+                  onChange={(estimatedMinutes) => updateTask(task.id, { estimatedMinutes })}
+                />
+              </div>
             </div>
 
             {/* Priority */}
             <div className="flex items-start sm:items-center gap-3">
-              <Flag className="w-4 h-4 text-muted-foreground mt-1 sm:mt-0 flex-shrink-0" />
-              <div className="flex flex-wrap items-center gap-1.5">
+              <Flag className="w-4 h-4 text-muted-foreground mt-2 sm:mt-0 flex-shrink-0" />
+              <div className="flex flex-wrap items-center gap-1 border border-border/80 rounded-lg p-1">
                 {priorityOptions.map(p => (
                   <button
                     key={p.value}
                     onClick={() => updateTask(task.id, { priority: p.value })}
                     className={cn(
-                      "flex items-center gap-1.5 text-xs font-mono px-2 py-1 rounded-md transition-colors",
-                      task.priority === p.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:surface-3 hover:text-foreground"
+                      "flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded-md transition-colors",
+                      task.priority === p.value ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                     )}
                   >
-                    <div className={cn("w-2 h-2 rounded-full", p.color)} />
+                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0", p.color)} />
                     {p.label}
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Energy Tags */}
+            <div className="flex items-start sm:items-center gap-3">
+              <span className="w-4 h-4 text-muted-foreground mt-2 sm:mt-0 flex-shrink-0 flex items-center justify-center text-[10px]">⚡</span>
+              <div className="flex flex-wrap items-center gap-1 border border-border/80 rounded-lg p-1">
+                {ENERGY_TAGS.map(tag => (
+                  <button
+                    key={tag.value}
+                    onClick={() => updateTask(task.id, { energyTag: task.energyTag === tag.value ? undefined : tag.value })}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded-md transition-colors border",
+                      task.energyTag === tag.value
+                        ? cn(tag.color, "shadow-sm")
+                        : "border-transparent text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                    )}
+                  >
+                    <span>{tag.emoji}</span>
+                    <span className={task.energyTag === tag.value ? 'font-medium' : ''}>{tag.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Goal Link */}
+            {goals.length > 0 && (
+              <div className="flex items-start sm:items-center gap-3 pt-2">
+                <Diamond className="w-4 h-4 text-muted-foreground mt-1 sm:mt-0 flex-shrink-0" />
+                <select
+                  value={task.goalId || ''}
+                  onChange={(e) => updateTask(task.id, { goalId: e.target.value || undefined })}
+                  className="bg-surface-2 text-sm text-foreground border border-border rounded-md px-2 py-1 outline-none focus:border-primary/40 font-mono flex-1 max-w-full"
+                >
+                  <option value="">No Goal Assigned</option>
+                  {goals.map(g => (
+                    <option key={g.id} value={g.id}>{g.title}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Subtasks */}

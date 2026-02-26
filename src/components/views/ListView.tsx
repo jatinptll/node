@@ -3,6 +3,7 @@ import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { TaskItem } from '@/components/tasks/TaskItem';
 import { TaskCreationRow } from '@/components/tasks/TaskCreationRow';
+import { formatEstimate } from '@/components/tasks/TimeEstimateSelector';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,14 +21,22 @@ export const ListView = () => {
   const completedCount = completedTasks.length;
   const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
 
+  const totalEstimatedMins = activeTasks.reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 animate-fade-in">
       {/* Progress bar */}
       {totalTasks > 0 && selectedListId !== 'upcoming' && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-mono text-muted-foreground">
-              {completedCount} of {totalTasks} completed
+            <span className="text-xs font-mono text-muted-foreground flex items-center gap-2">
+              <span>{completedCount} of {totalTasks} completed</span>
+              {totalEstimatedMins > 0 && (
+                <>
+                  <span>·</span>
+                  <span>~{formatEstimate(totalEstimatedMins)} remaining</span>
+                </>
+              )}
             </span>
             <span className="text-xs font-mono text-muted-foreground">{Math.round(progress)}%</span>
           </div>

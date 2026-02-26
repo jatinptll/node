@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Task, TaskList, Workspace, Section, KanbanColumn, Priority, TaskStatus } from '@/types/task';
+import type { Task, TaskList, Workspace, Section, KanbanColumn, Priority, TaskStatus, Goal } from '@/types/task';
 import * as db from '@/lib/database';
 import { useUIStore } from '@/store/uiStore';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ interface TaskStore {
   workspaces: Workspace[];
   lists: TaskList[];
   tasks: Task[];
+  goals: Goal[];
   sections: Section[];
   columns: KanbanColumn[];
   userId: string | null;
@@ -63,7 +64,7 @@ interface TaskStore {
   addWorkspace: (workspace: Workspace) => void;
   updateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   deleteWorkspace: (workspaceId: string) => void;
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'sortOrder' | 'subtasks' | 'labels' | 'isCompleted' | 'source'> & { title: string; listId: string; priority?: Priority; status?: TaskStatus }) => void;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'sortOrder' | 'subtasks' | 'labels' | 'isCompleted' | 'source'> & { title: string; listId: string; priority?: Priority; status?: TaskStatus; estimatedMinutes?: number }) => void;
   addClassroomTask: (task: Task) => void;
   addList: (list: TaskList) => void;
   updateList: (listId: string, updates: Partial<TaskList>) => void;
@@ -74,6 +75,11 @@ interface TaskStore {
   moveTask: (taskId: string, status: TaskStatus) => void;
   getTasksForList: (listId: string) => Task[];
   getTasksByStatus: (listId: string) => Record<TaskStatus, Task[]>;
+
+  // Goals
+  addGoal: (goal: Goal) => void;
+  updateGoal: (goalId: string, updates: Partial<Goal>) => void;
+  deleteGoal: (goalId: string) => void;
 }
 
 let nextId = 100;
@@ -82,6 +88,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   workspaces: defaultWorkspaces,
   lists: [], // Start empty to prevent ghosting before DB loads
   tasks: defaultTasks,
+  goals: [],
   sections: [],
   columns: defaultColumns,
   userId: null,
@@ -89,10 +96,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   loadUserData: async (userId: string) => {
     try {
-      const [workspaces, lists, tasks] = await Promise.all([
+      const [workspaces, lists, tasks, goals] = await Promise.all([
         db.fetchUserWorkspaces(userId),
         db.fetchUserLists(userId),
         db.fetchUserTasks(userId),
+        db.fetchUserGoals(userId),
       ]);
 
       const finalWorkspaces = workspaces.length > 0 ? workspaces : defaultWorkspaces;
@@ -102,6 +110,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         workspaces: finalWorkspaces,
         lists: finalLists,
         tasks,
+        goals,
         userId,
         isLoaded: true,
       });
@@ -131,6 +140,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       workspaces: defaultWorkspaces,
       lists: defaultLists,
       tasks: [],
+      goals: [],
       userId: null,
       isLoaded: false,
     });
@@ -151,6 +161,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       labels: [],
       subtasks: [],
       dueDate: partial.dueDate,
+      estimatedMinutes: partial.estimatedMinutes,
+      deferralCount: 0,
+      energyTag: undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -354,9 +367,19 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   updateTask: (taskId, updates) => {
     const userId = get().userId;
     const prevTasks = get().tasks;
+    const existingTask = prevTasks.find(t => t.id === taskId);
+
+    let finalUpdates = { ...updates };
+
+    // Track deferrals: if moving due date to a later date
+    if (updates.dueDate && existingTask && existingTask.dueDate) {
+      if (new Date(updates.dueDate) > new Date(existingTask.dueDate)) {
+        finalUpdates.deferralCount = (existingTask.deferralCount || 0) + 1;
+      }
+    }
 
     set((s) => ({
-      tasks: s.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t),
+      tasks: s.tasks.map(t => t.id === taskId ? { ...t, ...finalUpdates } : t),
     }));
 
     // Persist to Supabase — rollback on failure
@@ -454,5 +477,48 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       review: tasks.filter(t => t.status === 'review' && !t.isCompleted),
       done: tasks.filter(t => t.isCompleted || t.status === 'done'),
     };
+  },
+
+  addGoal: (goal) => {
+    const userId = get().userId;
+    set(s => ({ goals: [...s.goals, goal] }));
+    if (userId) {
+      persistToDB(() => db.upsertGoal(userId, goal), 'Failed to save goal').then(success => {
+        if (!success) set(s => ({ goals: s.goals.filter(g => g.id !== goal.id) }));
+      });
+    }
+  },
+
+  updateGoal: (goalId, updates) => {
+    const userId = get().userId;
+    const prevGoals = get().goals;
+    set(s => ({ goals: s.goals.map(g => g.id === goalId ? { ...g, ...updates } : g) }));
+    if (userId) {
+      const goal = get().goals.find(g => g.id === goalId);
+      if (goal) {
+        persistToDB(() => db.upsertGoal(userId, goal), 'Failed to update goal').then(success => {
+          if (!success) set({ goals: prevGoals });
+        });
+      }
+    }
+  },
+
+  deleteGoal: (goalId) => {
+    const userId = get().userId;
+    const prevGoals = get().goals;
+    const prevTasks = get().tasks;
+    set(s => ({
+      goals: s.goals.filter(g => g.id !== goalId),
+      tasks: s.tasks.map(t => t.goalId === goalId ? { ...t, goalId: undefined } : t)
+    }));
+    if (userId) {
+      persistToDB(async () => {
+        await db.deleteGoal(userId, goalId);
+        // Optionally update any tasks that were assigned this goal, wait, the ON DELETE SET NULL on DB handles the actual relationships
+        // but it doesn't hurt to update the state correctly in case of failure.
+      }, 'Failed to delete goal').then(success => {
+        if (!success) set({ goals: prevGoals, tasks: prevTasks });
+      });
+    }
   },
 }));

@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ClassroomSync } from './ClassroomSync';
 import { EditWorkspacesDialog } from './EditWorkspacesDialog';
+import { GoalDialog } from '@/components/tasks/GoalDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
@@ -28,10 +29,11 @@ const navItems = [
 
 export const Sidebar = () => {
   const { sidebarCollapsed, selectedListId, setSelectedListId, hiddenListIds, toggleListVisibility } = useUIStore();
-  const { workspaces, lists, tasks } = useTaskStore();
+  const { workspaces, lists, tasks, goals } = useTaskStore();
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [openWorkspaces, setOpenWorkspaces] = useState<Record<string, boolean>>({});
   const [editWorkspacesOpen, setEditWorkspacesOpen] = useState(false);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
 
 
@@ -287,6 +289,80 @@ export const Sidebar = () => {
                   </div>
                 );
               })}
+
+              {/* Goals */}
+              <div className="mt-2">
+                <div className="px-4 flex items-center justify-between group">
+                  <p
+                    className="text-xs font-mono text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors flex-1 cursor-pointer"
+                    onClick={() => setOpenWorkspaces(prev => ({ ...prev, 'goals': prev['goals'] === false ? true : false }))}
+                  >
+                    Goals
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setGoalDialogOpen(true); }}
+                      className="p-0.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground transition-colors"
+                      title="Add Goal"
+                    >
+                      <Diamond className="w-3.5 h-3.5" />
+                    </button>
+                    <div
+                      className="cursor-pointer flex items-center justify-center p-0.5"
+                      onClick={() => setOpenWorkspaces(prev => ({ ...prev, 'goals': prev['goals'] === false ? true : false }))}
+                    >
+                      {openWorkspaces['goals'] !== false ? (
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {openWorkspaces['goals'] !== false && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-2 space-y-0.5 mt-1">
+                        {goals.length > 0 ? (
+                          goals.map((goal) => {
+                            const isActive = selectedListId === goal.id;
+                            const goalTasks = tasks.filter(t => t.goalId === goal.id && !t.isCompleted);
+                            const count = goalTasks.length;
+                            return (
+                              <button
+                                key={goal.id}
+                                onClick={() => handleItemClick(goal.id)}
+                                className={cn(
+                                  "flex items-center rounded-md text-sm transition-all",
+                                  sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "w-full gap-3 px-3 py-2",
+                                  isActive ? "text-primary font-medium" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                                )}
+                              >
+                                <Diamond className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span className="flex-1 text-left truncate">{goal.title}</span>
+                                {count > 0 && (
+                                  <span className="min-w-[22px] h-[22px] flex items-center justify-center text-[11px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-mono">{count}</span>
+                                )}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground pl-3 py-1 font-mono italic">
+                            No goals yet
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
             </div>
           )}
         </div>
@@ -304,6 +380,7 @@ export const Sidebar = () => {
         </div>
       </motion.aside>
       <EditWorkspacesDialog open={editWorkspacesOpen} onOpenChange={setEditWorkspacesOpen} />
+      <GoalDialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen} />
     </>
   );
 };

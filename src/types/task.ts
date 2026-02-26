@@ -2,6 +2,16 @@ export type Priority = 'p1' | 'p2' | 'p3' | 'p4';
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskSource = 'manual' | 'classroom';
 export type ViewType = 'list' | 'kanban' | 'calendar' | 'matrix';
+export type EnergyTag = 'deep_focus' | 'quick_win' | 'comms' | 'routine';
+export type GoalTimeframe = 'weekly' | 'monthly' | 'quarterly';
+
+export interface Goal {
+  id: string;
+  title: string;
+  timeframe: GoalTimeframe;
+  targetDate?: string;
+  sortOrder: number;
+}
 
 export interface Label {
   id: string;
@@ -34,6 +44,10 @@ export interface Task {
   source: TaskSource;
   labels: Label[];
   subtasks: Subtask[];
+  estimatedMinutes?: number;
+  deferralCount?: number;
+  energyTag?: EnergyTag;
+  goalId?: string;
   createdAt: string;
 }
 

@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Clock, AlertTriangle, Diamond } from 'lucide-react';
 import type { Task } from '@/types/task';
+import { ENERGY_TAGS } from '@/lib/energy_tags';
+import { formatEstimate } from './TimeEstimateSelector';
 
 const priorityColors: Record<string, string> = {
   p1: 'bg-destructive',
@@ -34,13 +36,16 @@ const getDueDateInfo = (dueDate?: string) => {
   };
 };
 
-export const TaskItem = ({ task }: { task: Task }) => {
-  const { toggleTask, lists } = useTaskStore();
-  const { openDetailPanel, selectedListId } = useUIStore();
+export const TaskItem = ({ task, isOverlay }: { task: Task; isOverlay?: boolean }) => {
+  const { toggleTask, lists, goals } = useTaskStore();
+  const { openDetailPanel, detailPanelTaskId, selectedListId } = useUIStore();
   const dueInfo = getDueDateInfo(task.dueDate);
   const completedSubtasks = task.subtasks.filter(s => s.isCompleted).length;
 
+  const isSelected = detailPanelTaskId === task.id;
   const parentList = lists.find(l => l.id === task.listId);
+  const goal = task.goalId ? goals.find(g => g.id === task.goalId) : null;
+  const isGoalView = selectedListId === task.goalId;
   const showListTag = parentList && selectedListId !== parentList.id;
 
   const [localCompleted, setLocalCompleted] = useState(task.isCompleted);
@@ -130,6 +135,29 @@ export const TaskItem = ({ task }: { task: Task }) => {
         )}
         {dueInfo && (
           <span className={cn("text-xs px-1.5 py-0.5 rounded font-mono", dueInfo.className)}>{dueInfo.label}</span>
+        )}
+        {task.energyTag && (
+          <span className="text-xs" title={ENERGY_TAGS.find(t => t.value === task.energyTag)?.label}>
+            {ENERGY_TAGS.find(t => t.value === task.energyTag)?.emoji}
+          </span>
+        )}
+        {task.estimatedMinutes && (
+          <span className="flex items-center gap-1 text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded font-mono">
+            <Clock className="w-3 h-3" />
+            {formatEstimate(task.estimatedMinutes)}
+          </span>
+        )}
+        {(task.deferralCount || 0) >= 2 && (
+          <span className="flex items-center gap-1 text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded font-mono" title="Deferred multiple times">
+            <AlertTriangle className="w-3 h-3" />
+            {(task.deferralCount || 0)}
+          </span>
+        )}
+        {goal && !isGoalView && (
+          <span className="flex items-center gap-1 text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded font-mono">
+            <Diamond className="w-3 h-3" />
+            <span className="hidden sm:inline">{goal.title}</span>
+          </span>
         )}
         <span className={cn("w-2 h-2 rounded-full flex-shrink-0", priorityColors[task.priority])} title={priorityLabels[task.priority]} />
       </div>
