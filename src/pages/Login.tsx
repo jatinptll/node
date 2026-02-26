@@ -99,7 +99,7 @@ const LoginPage = () => {
                             </motion.div>
                             <h1 className="text-2xl font-bold text-foreground font-mono">Node</h1>
                             <p className="text-muted-foreground text-sm mt-2">
-                                Task management that flows with you
+                                Work intelligence that adapts to you
                             </p>
                         </div>
 
