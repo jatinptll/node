@@ -104,7 +104,15 @@ export const UserMenu = () => {
             </DropdownMenu>
 
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent
+                    className="sm:max-w-[425px]"
+                    onOpenAutoFocus={(e) => {
+                        // Prevent mobile keyboard from opening immediately
+                        if (window.innerWidth <= 768) {
+                            e.preventDefault();
+                        }
+                    }}
+                >
                     <DialogHeader>
                         <DialogTitle>Profile Settings</DialogTitle>
                     </DialogHeader>

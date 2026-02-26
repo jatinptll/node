@@ -214,16 +214,16 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
 
             {/* Goal Link */}
             {goals.length > 0 && (
-              <div className="flex items-start sm:items-center gap-3 pt-2">
-                <Diamond className="w-4 h-4 text-muted-foreground mt-1 sm:mt-0 flex-shrink-0" />
+              <div className="flex items-center gap-3 pt-2">
+                <Diamond className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <select
                   value={task.goalId || ''}
                   onChange={(e) => updateTask(task.id, { goalId: e.target.value || undefined })}
-                  className="bg-surface-2 text-sm text-foreground border border-border rounded-md px-2 py-1 outline-none focus:border-primary/40 font-mono flex-1 max-w-full"
+                  className="bg-transparent text-sm text-foreground border border-border/80 rounded-md px-2 py-1.5 outline-none focus:border-primary/50 hover:border-primary/30 transition-all font-mono flex-1 max-w-full cursor-pointer"
                 >
-                  <option value="">No Goal Assigned</option>
+                  <option value="" className="bg-background text-foreground">No Goal Assigned</option>
                   {goals.map(g => (
-                    <option key={g.id} value={g.id}>{g.title}</option>
+                    <option key={g.id} value={g.id} className="bg-background text-foreground">{g.title}</option>
                   ))}
                 </select>
               </div>
