@@ -101,24 +101,11 @@ const AppContent = () => {
       loadUserData(user.id);
       loadSyncState(user.id);
 
-      // Always fetch fresh user metadata from server for hidden lists
-      // (the user object may come from cached session with stale metadata)
-      const restoreHiddenLists = async () => {
-        try {
-          const { data: { user: freshUser } } = await supabase.auth.getUser();
-          const cloudHidden = freshUser?.user_metadata?.hidden_lists;
-          if (Array.isArray(cloudHidden)) {
-            useUIStore.getState().setHiddenListIds(cloudHidden);
-          }
-        } catch (err) {
-          // Fallback: try from the user object we already have
-          const cloudHidden = user.user_metadata?.hidden_lists;
-          if (Array.isArray(cloudHidden)) {
-            useUIStore.getState().setHiddenListIds(cloudHidden);
-          }
-        }
-      };
-      restoreHiddenLists();
+      // Restore hidden lists from the user's metadata which is automatically synced locally
+      const cloudHidden = user.user_metadata?.hidden_lists;
+      if (Array.isArray(cloudHidden)) {
+        useUIStore.getState().setHiddenListIds(cloudHidden);
+      }
     }
   }, [user, isInitialized, loadUserData, loadSyncState]);
 

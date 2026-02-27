@@ -26,21 +26,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initialize: async () => {
         try {
+            // Prevent duplicate listeners if already initialized
+            if (get().isInitialized) {
+                // We're already initialized. We just refresh the local session state silently
+                const { data: { session } } = await supabase.auth.getSession();
+                set({ user: session?.user ?? null, session });
+                return;
+            }
+
             // Get current session
             const { data: { session } } = await supabase.auth.getSession();
-            let user = session?.user ?? null;
+            const user = session?.user ?? null;
 
             // Clean up the URL by removing the OAuth tokens from the hash fragment
             if (window.location.hash && window.location.hash.includes('access_token=')) {
                 window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-            }
-
-            if (user) {
-                // Fetch fresh user data from server to get the latest metadata
-                const { data: { user: freshUser } } = await supabase.auth.getUser();
-                if (freshUser) {
-                    user = freshUser;
-                }
             }
 
             set({
@@ -51,20 +51,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
 
             // Listen for auth changes (skip INITIAL_SESSION — we handle init above)
-            supabase.auth.onAuthStateChange(async (_event, session) => {
+            supabase.auth.onAuthStateChange(async (_event, newSession) => {
                 if (_event === 'SIGNED_IN' && window.location.hash.includes('access_token=')) {
                     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
                 }
 
                 if (_event === 'INITIAL_SESSION') return;
-                let user = session?.user ?? null;
-                if (user) {
-                    const { data: { user: freshUser } } = await supabase.auth.getUser();
-                    if (freshUser) user = freshUser;
-                }
+
                 set({
-                    user,
-                    session,
+                    user: newSession?.user ?? null,
+                    session: newSession,
                     isLoading: false,
                 });
             });
