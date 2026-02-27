@@ -26,24 +26,32 @@ const defaultLists: TaskList[] = [
 
 const defaultTasks: Task[] = [];
 
+// Shared promise queue to prevent race conditions during rapid updates (e.g. typing or toggling).
+// This guarantees that earlier DB updates NEVER overwrite later ones if network latency fluctuates.
+let dbSyncQueue = Promise.resolve();
+
 /**
- * Helper: persist to Supabase and show a toast if it fails.
+ * Helper: persist to Supabase sequentially and show a toast if it fails.
  * Returns true on success, false on failure.
  */
 async function persistToDB(
   operation: () => Promise<void>,
   errorLabel: string
 ): Promise<boolean> {
-  try {
-    await operation();
-    return true;
-  } catch (err) {
-    console.error(`${errorLabel}:`, err);
-    toast.error('Sync failed', {
-      description: `${errorLabel}. Your change may not be saved. Try reloading.`,
+  return new Promise((resolve) => {
+    dbSyncQueue = dbSyncQueue.then(async () => {
+      try {
+        await operation();
+        resolve(true);
+      } catch (err) {
+        console.error(`${errorLabel}:`, err);
+        toast.error('Sync failed', {
+          description: `${errorLabel}. Your change may not be saved. Try reloading.`,
+        });
+        resolve(false);
+      }
     });
-    return false;
-  }
+  });
 }
 
 interface TaskStore {

@@ -65,9 +65,11 @@ export const TaskItem = ({ task, isOverlay }: { task: Task; isOverlay?: boolean 
     setLocalCompleted(!localCompleted);
     setIsAnimating(true);
 
-    // Allow bounce animation to play before unmounting/moving to completed section
+    // Update store and database immediately to prevent data loss on unmount/reload
+    toggleTask(task.id);
+
+    // Allow bounce animation to play before resetting animation lock
     setTimeout(() => {
-      toggleTask(task.id);
       setIsAnimating(false);
     }, 400);
   };

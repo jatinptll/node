@@ -39,8 +39,11 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
     if (isAnimating) return;
     setLocalCompleted(!localCompleted);
     setIsAnimating(true);
+
+    // Update store and database immediately to prevent data loss on unmount/reload
+    toggleTask(task.id);
+
     setTimeout(() => {
-      toggleTask(task.id);
       setIsAnimating(false);
     }, 400);
   };
