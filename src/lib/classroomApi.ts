@@ -89,6 +89,20 @@ export async function getCoursework(
 }
 
 /**
+ * Get all student submissions for a specific course
+ */
+export async function getCourseSubmissions(
+    courseId: string,
+    accessToken: string
+): Promise<ClassroomSubmission[]> {
+    const data = await classroomFetch<{ studentSubmissions?: ClassroomSubmission[] }>(
+        `/courses/${courseId}/courseWork/-/studentSubmissions?states=TURNED_IN&states=RETURNED`,
+        accessToken
+    );
+    return data.studentSubmissions || [];
+}
+
+/**
  * Get submission status for coursework items
  */
 export async function getMySubmissions(
@@ -104,7 +118,7 @@ export async function getMySubmissions(
 }
 
 /**
- * Fetch all courses with their coursework in one go
+ * Fetch all courses with their coursework and submissions in one go
  */
 export async function fetchAllClassroomData(accessToken: string) {
     const courses = await getCourses(accessToken);
@@ -112,11 +126,14 @@ export async function fetchAllClassroomData(accessToken: string) {
     const coursesWithWork = await Promise.all(
         courses.map(async (course) => {
             try {
-                const coursework = await getCoursework(course.id, accessToken);
-                return { course, coursework };
+                const [coursework, submissions] = await Promise.all([
+                    getCoursework(course.id, accessToken),
+                    getCourseSubmissions(course.id, accessToken)
+                ]);
+                return { course, coursework, submissions };
             } catch (err) {
-                console.warn(`Failed to fetch coursework for ${course.name}:`, err);
-                return { course, coursework: [] as ClassroomCoursework[] };
+                console.warn(`Failed to fetch coursework/submissions for ${course.name}:`, err);
+                return { course, coursework: [] as ClassroomCoursework[], submissions: [] as ClassroomSubmission[] };
             }
         })
     );

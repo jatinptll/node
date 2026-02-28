@@ -55,9 +55,11 @@ export const ListView = () => {
       )}
 
       {/* Task creation */}
-      <div className="mb-4">
-        <TaskCreationRow />
-      </div>
+      {selectedListId !== 'completed' && (
+        <div className="mb-4">
+          <TaskCreationRow />
+        </div>
+      )}
 
       {/* Active tasks */}
       <div className="space-y-0.5">

@@ -100,6 +100,16 @@ export async function upsertList(userId: string, list: TaskList): Promise<void> 
 }
 
 export async function deleteList(userId: string, listId: string): Promise<void> {
+    // Delete all tasks in the list first
+    const { error: taskError } = await db
+        .from('tasks')
+        .delete()
+        .eq('list_id', listId)
+        .eq('user_id', userId);
+
+    if (taskError) throw taskError;
+
+    // Delete the list itself
     const { error } = await db
         .from('task_lists')
         .delete()
