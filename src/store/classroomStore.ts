@@ -145,17 +145,12 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                 }
             });
 
-            const email = session?.user?.email;
-            const options: any = {};
-
             // If it's explicitly their first time connecting, force account selection
             if (!isConnectedState) {
-                options.prompt = 'select_account';
-            } else if (email) {
-                options.login_hint = email;
+                client.requestAccessToken({ prompt: 'select_account' });
+            } else {
+                client.requestAccessToken({ prompt: '' });
             }
-
-            client.requestAccessToken(options);
         });
 
         set({ isSyncing: true, syncError: null });
