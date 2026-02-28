@@ -75,7 +75,7 @@ export interface TaskList {
 export interface Workspace {
   id: string;
   name: string;
-  type: 'personal' | 'academic' | 'custom';
+  type: 'personal' | 'academic' | 'work' | 'projects' | 'custom';
 }
 
 export interface KanbanColumn {

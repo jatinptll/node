@@ -11,6 +11,7 @@ interface AuthState {
     session: Session | null;
     isLoading: boolean;
     isInitialized: boolean;
+    isInitializing: boolean;
 
     initialize: () => Promise<void>;
     signInWithGoogle: () => Promise<void>;
@@ -23,16 +24,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     session: null,
     isLoading: true,
     isInitialized: false,
+    isInitializing: false,
 
     initialize: async () => {
         try {
-            // Prevent duplicate listeners if already initialized
-            if (get().isInitialized) {
-                // We're already initialized. We just refresh the local session state silently
-                const { data: { session } } = await supabase.auth.getSession();
-                set({ user: session?.user ?? null, session });
+            // Prevent duplicate listeners if already initialized or checking
+            if (get().isInitialized || get().isInitializing) {
+                if (get().isInitialized) {
+                    // We're already initialized. We just refresh the local session state silently
+                    const { data: { session }, error } = await supabase.auth.getSession();
+                    // DO NOT log out the user silently if getSession fails momentarily (e.g., network glitch)
+                    if (!error && session) {
+                        set({ user: session.user, session });
+                    }
+                }
                 return;
             }
+
+            set({ isInitializing: true });
 
             // Get current session
             const { data: { session } } = await supabase.auth.getSession();
@@ -48,6 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 session,
                 isLoading: false,
                 isInitialized: true,
+                isInitializing: false,
             });
 
             // Listen for auth changes (skip INITIAL_SESSION — we handle init above)
@@ -66,7 +76,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
         } catch (error) {
             console.error('Auth initialization failed:', error);
-            set({ isLoading: false, isInitialized: true });
+            set({ isLoading: false, isInitialized: true, isInitializing: false });
         }
     },
 

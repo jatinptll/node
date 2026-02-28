@@ -114,11 +114,58 @@ export async function deleteList(userId: string, listId: string): Promise<void> 
 // ============================================
 
 export async function fetchUserTasks(userId: string): Promise<Task[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dateStr = thirtyDaysAgo.toISOString();
+
     const { data, error } = await db
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
+        .or(`is_completed.eq.false,completed_at.gt.${dateStr}`)
         .order('sort_order');
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+        id: row.id,
+        listId: row.list_id,
+        sectionId: row.section_id,
+        title: row.title,
+        description: row.description,
+        status: row.status,
+        priority: row.priority,
+        isUrgent: row.is_urgent,
+        isImportant: row.is_important,
+        dueDate: row.due_date,
+        startDate: row.start_date,
+        completedAt: row.completed_at,
+        isCompleted: row.is_completed,
+        sortOrder: row.sort_order,
+        source: row.source,
+        labels: row.labels || [],
+        subtasks: row.subtasks || [],
+        estimatedMinutes: row.estimated_minutes,
+        deferralCount: row.deferral_count,
+        energyTag: row.energy_tag,
+        goalId: row.goal_id,
+        classroomCourseworkId: row.classroom_coursework_id,
+        createdAt: row.created_at,
+    }));
+}
+
+export async function fetchOlderCompletedTasks(userId: string): Promise<Task[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dateStr = thirtyDaysAgo.toISOString();
+
+    const { data, error } = await db
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_completed', true)
+        .lte('completed_at', dateStr)
+        .order('completed_at', { ascending: false });
 
     if (error) throw error;
 

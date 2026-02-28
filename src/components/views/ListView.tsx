@@ -4,13 +4,16 @@ import { useUIStore } from '@/store/uiStore';
 import { TaskItem } from '@/components/tasks/TaskItem';
 import { TaskCreationRow } from '@/components/tasks/TaskCreationRow';
 import { formatEstimate } from '@/components/tasks/TimeEstimateSelector';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export const ListView = () => {
   const { selectedListId } = useUIStore();
-  const { getTasksForList, lists } = useTaskStore();
-  const [showCompleted, setShowCompleted] = useState(false);
+  const { getTasksForList, lists, loadOlderTasks, olderTasksLoaded } = useTaskStore();
+  const [showCompletedState, setShowCompletedState] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+
+  const showCompleted = selectedListId === 'completed' || showCompletedState;
 
   const allTasks = getTasksForList(selectedListId);
   const activeTasks = allTasks.filter(t => !t.isCompleted);
@@ -76,10 +79,10 @@ export const ListView = () => {
       )}
 
       {/* Completed section */}
-      {completedTasks.length > 0 && (
+      {(completedTasks.length > 0 || !olderTasksLoaded) && (
         <div className="mt-6">
           <button
-            onClick={() => setShowCompleted(!showCompleted)}
+            onClick={() => setShowCompletedState(!showCompletedState)}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
           >
             <ChevronDown className={`w-4 h-4 transition-transform ${showCompleted ? '' : '-rotate-90'}`} />
@@ -96,6 +99,30 @@ export const ListView = () => {
                 {completedTasks.map(task => (
                   <TaskItem key={task.id} task={task} />
                 ))}
+
+                {/* Load More Older Tasks Button */}
+                {!olderTasksLoaded && (
+                  <div className="pt-4 flex justify-center">
+                    <button
+                      onClick={async () => {
+                        setLoadingOlder(true);
+                        await loadOlderTasks();
+                        setLoadingOlder(false);
+                      }}
+                      disabled={loadingOlder}
+                      className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted/50"
+                    >
+                      {loadingOlder ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        completedTasks.length === 0 ? 'Load completed tasks' : 'Load older completed tasks'
+                      )}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

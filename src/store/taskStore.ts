@@ -8,7 +8,8 @@ const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '
 
 const defaultWorkspaces: Workspace[] = [
   { id: 'personal', name: 'Personal', type: 'personal' },
-  { id: 'academic', name: 'Academics', type: 'academic' },
+  { id: 'work', name: 'Work', type: 'work' },
+  { id: 'projects', name: 'Projects', type: 'projects' },
 ];
 
 const defaultColumns: KanbanColumn[] = [
@@ -67,6 +68,9 @@ interface TaskStore {
   // Data loading
   loadUserData: (userId: string) => Promise<void>;
   clearUserData: () => void;
+  loadOlderTasks: () => Promise<void>;
+
+  olderTasksLoaded: boolean;
 
   // Task actions
   addWorkspace: (workspace: Workspace) => void;
@@ -101,6 +105,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   columns: defaultColumns,
   userId: null,
   isLoaded: false,
+  olderTasksLoaded: false,
 
   loadUserData: async (userId: string) => {
     try {
@@ -143,6 +148,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
+  loadOlderTasks: async () => {
+    const userId = get().userId;
+    if (!userId || get().olderTasksLoaded) return;
+    try {
+      const olderTasks = await db.fetchOlderCompletedTasks(userId);
+      set(s => {
+        const existingIds = new Set(s.tasks.map(t => t.id));
+        const newTasks = olderTasks.filter(t => !existingIds.has(t.id));
+        return { tasks: [...s.tasks, ...newTasks], olderTasksLoaded: true };
+      });
+    } catch (err) {
+      console.error('Failed to load older tasks:', err);
+      toast.error('Could not load older completed tasks');
+    }
+  },
+
   clearUserData: () => {
     set({
       workspaces: defaultWorkspaces,
@@ -151,6 +172,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       goals: [],
       userId: null,
       isLoaded: false,
+      olderTasksLoaded: false,
     });
   },
 

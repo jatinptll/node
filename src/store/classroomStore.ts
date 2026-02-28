@@ -265,6 +265,25 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                 );
             }
 
+            // ──── Ensure Academic Workspace Exists ────
+            let targetWorkspaceId = 'academic';
+            const workspaces = useTaskStore.getState().workspaces;
+            const existingAcademic = workspaces.find(w => w.type === 'academic');
+
+            if (existingAcademic) {
+                targetWorkspaceId = existingAcademic.id;
+            } else if (classroomData.length > 0) {
+                // Determine a unique ID if 'academic' is already somehow taken but not type='academic'
+                // Usually just re-creating 'academic' is safe if it's completely gone.
+                const newAcademicWorkspace = {
+                    id: 'academic',
+                    name: 'Academics',
+                    type: 'academic' as const,
+                };
+                useTaskStore.getState().addWorkspace(newAcademicWorkspace);
+                targetWorkspaceId = 'academic';
+            }
+
             // ──── Add/update active courses ────
             for (const { course, coursework } of classroomData) {
                 let syncedCourse = newSyncedCourses.find((c) => c.id === course.id);
@@ -273,12 +292,12 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                     const listId = `classroom-${course.id}`;
                     const color = SUBJECT_COLORS[newSyncedCourses.length % SUBJECT_COLORS.length];
                     const currentListCount = useTaskStore.getState().lists.filter(
-                        (l) => l.workspaceId === 'academic'
+                        (l) => l.workspaceId === targetWorkspaceId
                     ).length;
 
                     const newList: TaskList = {
                         id: listId,
-                        workspaceId: 'academic',
+                        workspaceId: targetWorkspaceId,
                         name: course.name,
                         color,
                         sortOrder: currentListCount,
