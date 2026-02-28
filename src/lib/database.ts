@@ -285,6 +285,15 @@ export async function upsertClassroomSync(
     if (error) throw error;
 }
 
+export async function deleteClassroomSync(userId: string): Promise<void> {
+    const { error } = await db
+        .from('classroom_sync')
+        .delete()
+        .eq('user_id', userId);
+
+    if (error) throw error;
+}
+
 // ============================================
 // User Profile
 // ============================================

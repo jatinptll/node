@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchAllClassroomData, formatClassroomDueDate } from '@/lib/classroomApi';
+import { fetchAllClassroomData, formatClassroomDueDate, getUserProfile } from '@/lib/classroomApi';
 import type { Task, TaskList } from '@/types/task';
 import { useTaskStore } from './taskStore';
 import { useUIStore } from './uiStore';
@@ -46,6 +46,7 @@ interface ClassroomState {
 
     loadSyncState: (userId: string) => Promise<void>;
     syncNow: () => Promise<{ newTasks: number; updatedCourses: number; removedCourses: number }>;
+    disconnectClassroom: () => Promise<void>;
     clearState: () => void;
 }
 
@@ -106,6 +107,25 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
         });
     },
 
+    disconnectClassroom: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            localStorage.removeItem('node_classroom_email');
+
+            // Delete the sync state from DB completely (unlinks without deleting Academic lists)
+            await db.deleteClassroomSync(session.user.id).catch(console.error);
+        }
+
+        set({
+            isConnected: false,
+            isSyncing: false,
+            lastSyncAt: null,
+            syncError: null,
+            syncedCourses: [],
+            importedCourseworkIds: new Set(),
+        });
+    },
+
     syncNow: async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return { newTasks: 0, updatedCourses: 0, removedCourses: 0 };
@@ -145,12 +165,18 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                 }
             });
 
-            // If it's explicitly their first time connecting, force account selection
-            if (!isConnectedState) {
-                client.requestAccessToken({ prompt: 'select_account' });
+            const storedEmail = localStorage.getItem('node_classroom_email');
+            const options: any = {};
+
+            // If we have a stored email, use it as a login_hint to bypass the account chooser popup.
+            // Otherwise, prompt user to select an account.
+            if (storedEmail) {
+                options.login_hint = storedEmail;
             } else {
-                client.requestAccessToken({ prompt: '' });
+                options.prompt = 'select_account';
             }
+
+            client.requestAccessToken(options);
         });
 
         set({ isSyncing: true, syncError: null });
@@ -158,6 +184,14 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
         try {
             const providerToken = await getAccessToken();
             set({ isConnected: true });
+
+            // Fetch user profile to securely save the Google Classroom email address.
+            getUserProfile(providerToken).then((profile) => {
+                if (profile?.emailAddress) {
+                    localStorage.setItem('node_classroom_email', profile.emailAddress);
+                }
+            }).catch(console.error);
+
             const classroomData = await fetchAllClassroomData(providerToken);
             const { syncedCourses, importedCourseworkIds } = get();
 

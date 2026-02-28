@@ -9,6 +9,7 @@ import {
     AlertCircle,
     ChevronDown,
     ChevronRight,
+    Unplug,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -21,9 +22,19 @@ export const ClassroomSync = ({ collapsed }: { collapsed: boolean }) => {
         syncError,
         syncedCourses,
         syncNow,
+        disconnectClassroom,
     } = useClassroomStore();
 
     const [showCourses, setShowCourses] = useState(false);
+
+    const handleDisconnect = async () => {
+        if (confirm("Are you sure you want to completely disconnect Google Classroom? This will stop syncing your assignments but your existing courses inside Academics domain will not be deleted.")) {
+            await disconnectClassroom();
+            toast.success("Classroom disconnected correctly.", {
+                description: "Your existing tasks and academics domains have been kept safely."
+            });
+        }
+    };
 
     const handleSync = async () => {
         try {
@@ -124,21 +135,31 @@ export const ClassroomSync = ({ collapsed }: { collapsed: boolean }) => {
                     )}
                 </button>
 
-                {/* Synced courses toggle */}
+                {/* Synced courses toggle and unlink button */}
                 {syncedCourses.length > 0 && (
-                    <button
-                        onClick={() => setShowCourses(!showCourses)}
-                        className="w-full flex items-center gap-2 px-3 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        {showCourses ? (
-                            <ChevronDown className="w-3 h-3" />
-                        ) : (
-                            <ChevronRight className="w-3 h-3" />
-                        )}
-                        <span>
-                            {syncedCourses.length} course{syncedCourses.length !== 1 ? 's' : ''} synced
-                        </span>
-                    </button>
+                    <div className="flex items-center gap-1 justify-between px-1">
+                        <button
+                            onClick={() => setShowCourses(!showCourses)}
+                            className="flex items-center gap-2 px-2 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            {showCourses ? (
+                                <ChevronDown className="w-3 h-3" />
+                            ) : (
+                                <ChevronRight className="w-3 h-3" />
+                            )}
+                            <span>
+                                {syncedCourses.length} course{syncedCourses.length !== 1 ? 's' : ''} synced
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={handleDisconnect}
+                            title="Disconnect Google Classroom"
+                            className="p-1 rounded-md text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                        >
+                            <Unplug className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 )}
 
                 {/* Course list */}

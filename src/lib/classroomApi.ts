@@ -118,6 +118,17 @@ export async function getMySubmissions(
 }
 
 /**
+ * Get user profile to extract email
+ */
+export async function getUserProfile(accessToken: string): Promise<{ emailAddress?: string }> {
+    const data = await classroomFetch<{ emailAddress?: string }>(
+        '/userProfiles/me',
+        accessToken
+    );
+    return data;
+}
+
+/**
  * Fetch all courses with their coursework and submissions in one go
  */
 export async function fetchAllClassroomData(accessToken: string) {
