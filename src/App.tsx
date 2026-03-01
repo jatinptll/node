@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import { Loader2, Diamond } from "lucide-react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
+import { FocusOverlay } from "@/components/focus/FocusOverlay";
+import { MorningPlanModal } from "@/components/planning/MorningPlanModal";
 
 const queryClient = new QueryClient();
 
@@ -72,10 +74,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AppContent = () => {
   const { initialize, user, isInitialized } = useAuthStore();
-  const { loadUserData } = useTaskStore();
+  const { loadUserData, isLoaded } = useTaskStore();
   const { loadSyncState } = useClassroomStore();
+  const { isDailyPlanNeeded, dailyPlanDismissed, dailyPlanConfirmed } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showMorningPlan, setShowMorningPlan] = useState(false);
+  const morningPlanChecked = useRef(false);
 
   // Initialize auth on mount
   useEffect(() => {
@@ -141,6 +146,16 @@ const AppContent = () => {
     };
   }, [user, isInitialized, loadUserData, initialize]);
 
+  // Show morning plan modal on first daily open
+  useEffect(() => {
+    if (user && isLoaded && !morningPlanChecked.current) {
+      morningPlanChecked.current = true;
+      if (isDailyPlanNeeded()) {
+        setTimeout(() => setShowMorningPlan(true), 800);
+      }
+    }
+  }, [user, isLoaded, isDailyPlanNeeded]);
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
@@ -149,6 +164,9 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <Index />
+            {showMorningPlan && !dailyPlanDismissed && !dailyPlanConfirmed && (
+              <MorningPlanModal />
+            )}
           </ProtectedRoute>
         }
       />
@@ -164,6 +182,7 @@ const App = () => (
         <BrowserRouter>
           <Toaster />
           <Sonner />
+          <FocusOverlay />
           <AppContent />
         </BrowserRouter>
       </TooltipProvider>

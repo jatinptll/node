@@ -7,6 +7,7 @@ import { MatrixView } from '@/components/views/MatrixView';
 import { DashboardView } from '@/components/views/DashboardView';
 import { GoalView } from '@/components/views/GoalView';
 import { TodayView } from '@/components/views/TodayView';
+import { InsightsView } from '@/components/views/InsightsView';
 import { useTaskStore } from '@/store/taskStore';
 
 const Index = () => {
@@ -17,6 +18,7 @@ const Index = () => {
   const showDashboard = selectedListId === 'dashboard';
   const isGoal = goals.some(g => g.id === selectedListId);
   const isToday = selectedListId === 'today';
+  const isInsights = selectedListId === 'insights';
 
   return (
     <AppLayout>
@@ -26,6 +28,8 @@ const Index = () => {
         <GoalView goalId={selectedListId} />
       ) : isToday ? (
         <TodayView />
+      ) : isInsights ? (
+        <InsightsView />
       ) : (
         <>
           {activeView === 'list' && <ListView />}

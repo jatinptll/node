@@ -9,7 +9,7 @@ import { AnimatePresence } from 'framer-motion';
 
 export const TodayView = () => {
     const { tasks } = useTaskStore();
-    const { hiddenListIds } = useUIStore();
+    const { hiddenListIds, dailyPlanConfirmed, dailyPlanTaskIds } = useUIStore();
 
     const todayStr = getLocalDateString();
 
@@ -18,13 +18,21 @@ export const TodayView = () => {
     const overdueTasks = allActive.filter(t => t.dueDate && t.dueDate < todayStr);
     const todayTasks = allActive.filter(t => t.dueDate === todayStr);
 
+    // Pinned tasks from the morning plan (exclude if already in overdue/today)
+    const overdueTodayIds = new Set([...overdueTasks.map(t => t.id), ...todayTasks.map(t => t.id)]);
+    const pinnedTasks = dailyPlanConfirmed
+        ? dailyPlanTaskIds
+            .map(id => tasks.find(t => t.id === id))
+            .filter((t): t is NonNullable<typeof t> => !!t && !t.isCompleted && !overdueTodayIds.has(t.id))
+        : [];
+
     // Suggested Tasks: No due date, but high priority or deep focus energy tag
     const suggestedTasks = allActive.filter(t =>
         !t.dueDate &&
         (t.priority === 'p1' || t.priority === 'p2' || t.energyTag === 'deep_focus')
     ).slice(0, 5); // Limit to 5 suggestions
 
-    const todayEstimatedMins = [...overdueTasks, ...todayTasks].reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
+    const todayEstimatedMins = [...overdueTasks, ...todayTasks, ...pinnedTasks].reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
     const totalHours = todayEstimatedMins / 60;
     const isOverloaded = todayEstimatedMins > 480; // 8 hours
 
@@ -60,6 +68,23 @@ export const TodayView = () => {
             <div className="mb-4">
                 <TaskCreationRow />
             </div>
+
+            {/* Pinned from Morning Plan */}
+            {pinnedTasks.length > 0 && (
+                <div className="space-y-3">
+                    <h3 className="text-sm font-mono text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                        📌 Suggested Plan
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-mono">Tasks from your morning plan.</p>
+                    <div className="space-y-0.5">
+                        <AnimatePresence mode="popLayout">
+                            {pinnedTasks.map(task => (
+                                <TaskItem key={task.id} task={task} />
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            )}
 
             {/* Overdue */}
             {overdueTasks.length > 0 && (

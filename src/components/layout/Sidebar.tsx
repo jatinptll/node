@@ -5,7 +5,7 @@ import { useTaskStore } from '@/store/taskStore';
 import {
   CalendarDays, CalendarRange, BarChart3, CheckCircle2,
   ChevronDown, ChevronRight, GraduationCap, Diamond,
-  MoreHorizontal, Eye, EyeOff
+  MoreHorizontal, Eye, EyeOff, Lightbulb
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ClassroomSync } from './ClassroomSync';
@@ -25,6 +25,7 @@ const navItems = [
   { id: 'today', label: 'Today', icon: CalendarDays },
   { id: 'upcoming', label: 'Upcoming', icon: CalendarRange },
   { id: 'completed', label: 'Completed', icon: CheckCircle2 },
+  { id: 'insights', label: 'Insights', icon: Lightbulb },
 ];
 
 export const Sidebar = () => {

@@ -11,6 +11,7 @@ import {
 import { cn, getLocalDateString } from '@/lib/utils';
 import type { Task, Priority } from '@/types/task';
 import { QuickAdd } from '@/components/layout/QuickAdd';
+import { InsightsCards } from '@/components/insights/InsightsCards';
 
 /* ──────────────── Helpers ──────────────── */
 
@@ -649,6 +650,9 @@ export const DashboardView = () => {
                                 </div>
                             </div>
                         </motion.div>
+
+                        {/* Behavioral Insights */}
+                        <InsightsCards />
 
                         {/* Quick Stats Footer */}
                         <motion.div

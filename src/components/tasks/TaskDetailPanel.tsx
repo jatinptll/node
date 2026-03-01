@@ -300,6 +300,27 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
             </div>
           )}
 
+          {/* Focus Session */}
+          {!task.isCompleted && (
+            <button
+              onClick={() => {
+                useUIStore.getState().startFocusSession(task.id);
+                closeDetailPanel();
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-mono rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+              </svg>
+              Start Focus Session
+            </button>
+          )}
+          {(task.actualDurationMinutes || task.focusSessionsCount) ? (
+            <div className="text-xs text-muted-foreground font-mono text-center">
+              {task.focusSessionsCount || 0} focus session{(task.focusSessionsCount || 0) !== 1 ? 's' : ''} · {task.actualDurationMinutes || 0} min total
+            </div>
+          ) : null}
+
           {/* Delete */}
           {showDeleteConfirm ? (
             <div className="w-full flex flex-col items-center gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">

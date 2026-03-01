@@ -49,6 +49,8 @@ export interface Task {
   energyTag?: EnergyTag;
   goalId?: string;
   classroomCourseworkId?: string;
+  actualDurationMinutes?: number;
+  focusSessionsCount?: number;
   createdAt: string;
 }
 

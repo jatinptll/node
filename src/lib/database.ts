@@ -160,6 +160,8 @@ export async function fetchUserTasks(userId: string): Promise<Task[]> {
         energyTag: row.energy_tag,
         goalId: row.goal_id,
         classroomCourseworkId: row.classroom_coursework_id,
+        actualDurationMinutes: row.actual_duration_minutes,
+        focusSessionsCount: row.focus_sessions_count,
         createdAt: row.created_at,
     }));
 }
@@ -233,6 +235,8 @@ export async function upsertTask(userId: string, task: Task): Promise<void> {
             energy_tag: task.energyTag || null,
             goal_id: task.goalId || null,
             classroom_coursework_id: task.classroomCourseworkId || null,
+            actual_duration_minutes: task.actualDurationMinutes || null,
+            focus_sessions_count: task.focusSessionsCount || 0,
             created_at: task.createdAt,
         }, { onConflict: 'id,user_id' });
 

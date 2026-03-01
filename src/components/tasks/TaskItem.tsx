@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { cn, getLocalDateString } from '@/lib/utils';
-import { BookOpen, Clock, AlertTriangle, Diamond } from 'lucide-react';
+import { BookOpen, Clock, AlertTriangle, Diamond, Crosshair } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { ENERGY_TAGS } from '@/lib/energy_tags';
 import { formatEstimate } from './TimeEstimateSelector';
@@ -160,6 +160,18 @@ export const TaskItem = ({ task, isOverlay }: { task: Task; isOverlay?: boolean 
             <Diamond className="w-3 h-3" />
             <span className="hidden sm:inline">{goal.title}</span>
           </span>
+        )}
+        {!task.isCompleted && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              useUIStore.getState().startFocusSession(task.id);
+            }}
+            className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+            title="Start Focus Session"
+          >
+            <Crosshair className="w-3.5 h-3.5" />
+          </button>
         )}
         <span className={cn("w-2 h-2 rounded-full flex-shrink-0", priorityColors[task.priority])} title={priorityLabels[task.priority]} />
       </div>

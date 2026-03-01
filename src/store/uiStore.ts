@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { ViewType } from '@/types/task';
+import { getLocalDateString } from '@/lib/utils';
 
 interface UIState {
   sidebarCollapsed: boolean;
@@ -19,6 +20,18 @@ interface UIState {
   isListHidden: (listId: string) => boolean;
   cleanupHiddenLists: (existingListIds: string[]) => void;
   setHiddenListIds: (ids: string[]) => void;
+  // Focus Session
+  focusTaskId: string | null;
+  focusStartedAt: number | null;
+  startFocusSession: (taskId: string) => void;
+  endFocusSession: () => void;
+  // Daily Plan
+  dailyPlanConfirmed: boolean;
+  dailyPlanDismissed: boolean;
+  dailyPlanTaskIds: string[];
+  confirmDailyPlan: (taskIds: string[]) => void;
+  dismissDailyPlan: () => void;
+  isDailyPlanNeeded: () => boolean;
 }
 
 function loadHiddenLists(): string[] {
@@ -86,5 +99,40 @@ export const useUIStore = create<UIState>((set, get) => ({
       saveHiddenListsLocal(cleaned);
       set({ hiddenListIds: cleaned });
     }
+  },
+  // Focus Session
+  focusTaskId: null,
+  focusStartedAt: null,
+  startFocusSession: (taskId) => set({ focusTaskId: taskId, focusStartedAt: Date.now() }),
+  endFocusSession: () => set({ focusTaskId: null, focusStartedAt: null }),
+  // Daily Plan
+  dailyPlanConfirmed: false,
+  dailyPlanDismissed: false,
+  dailyPlanTaskIds: [],
+  confirmDailyPlan: (taskIds) => {
+    const todayKey = `node-daily-plan-${getLocalDateString()}`;
+    localStorage.setItem(todayKey, JSON.stringify({ confirmed: true, taskIds }));
+    set({ dailyPlanConfirmed: true, dailyPlanTaskIds: taskIds });
+  },
+  dismissDailyPlan: () => {
+    const todayKey = `node-daily-plan-${getLocalDateString()}`;
+    localStorage.setItem(todayKey, JSON.stringify({ dismissed: true }));
+    set({ dailyPlanDismissed: true });
+  },
+  isDailyPlanNeeded: () => {
+    const todayKey = `node-daily-plan-${getLocalDateString()}`;
+    const stored = localStorage.getItem(todayKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.confirmed) {
+          // Restore pinned tasks
+          set({ dailyPlanConfirmed: true, dailyPlanTaskIds: parsed.taskIds || [] });
+          return false;
+        }
+        if (parsed.dismissed) return false;
+      } catch { /* fallthrough */ }
+    }
+    return true;
   },
 }));
