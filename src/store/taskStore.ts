@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Task, TaskList, Workspace, Section, KanbanColumn, Priority, TaskStatus, Goal } from '@/types/task';
 import * as db from '@/lib/database';
 import { useUIStore } from '@/store/uiStore';
+import { getLocalDateString } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
@@ -486,7 +487,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   getTasksForList: (listId) => {
     const hiddenListIds = useUIStore.getState().hiddenListIds;
     if (listId === 'today') {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateString();
       return get().tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId));
     }
     if (listId === 'upcoming') {

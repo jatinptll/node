@@ -3,6 +3,7 @@ import { useUIStore } from '@/store/uiStore';
 import { TaskItem } from '@/components/tasks/TaskItem';
 import { TaskCreationRow } from '@/components/tasks/TaskCreationRow';
 import { formatEstimate } from '@/components/tasks/TimeEstimateSelector';
+import { getLocalDateString } from '@/lib/utils';
 import { AlertCircle, CalendarDays, Sparkles, Clock } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
@@ -10,7 +11,7 @@ export const TodayView = () => {
     const { tasks } = useTaskStore();
     const { hiddenListIds } = useUIStore();
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
 
     const allActive = tasks.filter(t => !t.isCompleted && !hiddenListIds.includes(t.listId));
 

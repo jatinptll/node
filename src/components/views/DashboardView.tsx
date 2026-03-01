@@ -8,7 +8,7 @@ import {
     Flame, CalendarDays, BookOpen, ArrowUpRight, ChevronRight,
     BarChart3, Zap, Trophy, Star, ArrowDown, ArrowUp, SlidersHorizontal, ChevronDown
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getLocalDateString } from '@/lib/utils';
 import type { Task, Priority } from '@/types/task';
 import { QuickAdd } from '@/components/layout/QuickAdd';
 
@@ -137,8 +137,10 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
                 if (year < min) min = year;
             }
         });
+        // Ensure at least current year is in the dropdown
+        if (currentYear < min) min = currentYear;
         return min;
-    }, [tasks, joinYear]);
+    }, [tasks, joinYear, currentYear]);
 
     const [selectedYear, setSelectedYear] = useState(currentYear);
 
@@ -157,7 +159,7 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
         const completionMap = new Map<string, number>();
         tasks.forEach(t => {
             if (t.completedAt) {
-                const dateKey = new Date(t.completedAt).toISOString().split('T')[0];
+                const dateKey = getLocalDateString(t.completedAt);
                 completionMap.set(dateKey, (completionMap.get(dateKey) || 0) + 1);
             }
         });
@@ -174,42 +176,56 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
             endDate.setDate(endDate.getDate() + (6 - endDayOfWeek));
         }
 
-        const weeksArray: { date: Date; count: number; isFuture: boolean; isDifferentYear: boolean; monthIdx: number }[][] = [];
+        const weeksArray: { date: Date; count: number; isFuture: boolean; isDifferentYear: boolean; monthIdx: number; year: number }[][] = [];
         let currDate = new Date(startDate);
 
         while (currDate <= endDate) {
-            const week: { date: Date; count: number; isFuture: boolean; isDifferentYear: boolean; monthIdx: number }[] = [];
+            // Do not render weeks that are completely in the future for the current year
+            if (selectedYear === currentYear && currDate.getTime() > today.getTime()) {
+                break;
+            }
+
+            const week: { date: Date; count: number; isFuture: boolean; isDifferentYear: boolean; monthIdx: number; year: number }[] = [];
             for (let d = 0; d < 7; d++) {
-                const key = currDate.toISOString().split('T')[0];
+                const key = getLocalDateString(currDate);
                 week.push({
                     date: new Date(currDate),
                     count: completionMap.get(key) || 0,
                     isFuture: currDate.getTime() > today.getTime(),
                     isDifferentYear: currDate.getFullYear() !== selectedYear,
                     monthIdx: currDate.getMonth(),
+                    year: currDate.getFullYear(),
                 });
                 currDate.setDate(currDate.getDate() + 1);
             }
             weeksArray.push(week);
         }
         return weeksArray;
-    }, [tasks, selectedYear]);
+    }, [tasks, selectedYear, currentYear]);
 
     const monthLabels = useMemo(() => {
         const labels: { label: string; colIndex: number }[] = [];
         let currentMonth = -1;
         weeks.forEach((week, i) => {
-            const mainMonthIdx = week[3].monthIdx;
+            const mainDay = week[3];
+            if (!mainDay) return;
+            const mainMonthIdx = mainDay.monthIdx;
+
             if (mainMonthIdx !== currentMonth) {
-                labels.push({
-                    label: week[3].date.toLocaleString('default', { month: 'short' }),
-                    colIndex: i
-                });
-                currentMonth = mainMonthIdx;
+                // Only show months for the selected year and ensure space between labels to prevent overlapping
+                if (mainDay.year === selectedYear) {
+                    if (labels.length === 0 || i - labels[labels.length - 1].colIndex > 2) {
+                        labels.push({
+                            label: mainDay.date.toLocaleString('default', { month: 'short' }),
+                            colIndex: i
+                        });
+                        currentMonth = mainMonthIdx;
+                    }
+                }
             }
         });
         return labels;
-    }, [weeks]);
+    }, [weeks, selectedYear]);
 
     const getIntensity = (count: number, isFuture: boolean, isDifferentYear: boolean) => {
         if (isDifferentYear || isFuture) return 'bg-transparent';
@@ -321,8 +337,8 @@ const WeeklySparkline = ({ tasks }: { tasks: Task[] }) => {
         for (let i = 6; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-            const key = d.toISOString().split('T')[0];
-            const count = tasks.filter(t => t.completedAt && new Date(t.completedAt).toISOString().split('T')[0] === key).length;
+            const key = getLocalDateString(d);
+            const count = tasks.filter(t => t.completedAt && getLocalDateString(t.completedAt) === key).length;
             days.push(count);
         }
         return days;
@@ -414,7 +430,7 @@ export const DashboardView = () => {
     // ──── Core Metrics ────
     const stats = useMemo(() => {
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        const todayStr = getLocalDateString(now);
         const weekAgo = new Date(now.getTime() - 7 * 86400000);
         const monthAgo = new Date(now.getTime() - 30 * 86400000);
 
@@ -464,8 +480,8 @@ export const DashboardView = () => {
         for (let i = 0; i < 365; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-            const key = d.toISOString().split('T')[0];
-            const completedOnDay = tasks.some(t => t.completedAt && new Date(t.completedAt).toISOString().split('T')[0] === key);
+            const key = getLocalDateString(d);
+            const completedOnDay = tasks.some(t => t.completedAt && getLocalDateString(t.completedAt) === key);
             if (completedOnDay) streak++;
             else if (i > 0) break; // Allow today to be empty
         }
