@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
-import { cn } from '@/lib/utils';
+import { cn, getLocalDateString } from '@/lib/utils';
 import { BookOpen, Clock, AlertTriangle, Diamond } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { ENERGY_TAGS } from '@/lib/energy_tags';
@@ -24,8 +24,8 @@ const priorityLabels: Record<string, string> = {
 
 const getDueDateInfo = (dueDate?: string) => {
   if (!dueDate) return null;
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const today = getLocalDateString();
+  const tomorrow = getLocalDateString(Date.now() + 86400000);
   if (dueDate < today) return { label: 'Overdue', className: 'text-destructive bg-destructive/10' };
   if (dueDate === today) return { label: 'Today', className: 'text-warning bg-warning/10' };
   if (dueDate === tomorrow) return { label: 'Tomorrow', className: 'text-foreground bg-muted' };

@@ -111,17 +111,23 @@ const AppContent = () => {
 
   // Re-fetch data when a tab regains visibility (cross-tab sync) and handle bfcache (back button)
   useEffect(() => {
+    let lastLoadTime = Date.now();
+    const RELOAD_DEBOUNCE_MS = 30_000; // Only reload if 30+ seconds have passed
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user && isInitialized) {
-        initialize(); // Re-verify auth just to be absolutely sure
-        loadUserData(user.id);
+        const elapsed = Date.now() - lastLoadTime;
+        if (elapsed >= RELOAD_DEBOUNCE_MS) {
+          initialize(); // Re-verify auth
+          loadUserData(user.id);
+          lastLoadTime = Date.now();
+        }
       }
     };
 
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
         // We're returning from bfcache (back button)
-        // Force an immediate re-check of the session
         initialize();
       }
     };

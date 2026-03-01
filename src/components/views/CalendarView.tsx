@@ -55,9 +55,13 @@ export const CalendarView = () => {
     const map: Record<string, Task[]> = {};
     tasks.forEach(t => {
       if (t.dueDate) {
-        const d = new Date(t.dueDate);
-        if (d.getMonth() === month && d.getFullYear() === year) {
-          const key = d.getDate().toString();
+        // Parse YYYY-MM-DD directly to avoid UTC timezone shift
+        const parts = t.dueDate.split('-');
+        const dueYear = parseInt(parts[0], 10);
+        const dueMonth = parseInt(parts[1], 10) - 1; // 0-indexed
+        const dueDay = parseInt(parts[2], 10);
+        if (dueMonth === month && dueYear === year) {
+          const key = dueDay.toString();
           if (!map[key]) map[key] = [];
           map[key].push(t);
         }

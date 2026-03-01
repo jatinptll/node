@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Edit2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
-const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
+import { SUBJECT_COLORS } from '@/lib/constants';
 
 export const EditWorkspacesDialog = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
   const { workspaces, lists, updateWorkspace, addWorkspace, deleteWorkspace, addList, deleteList, updateList } = useTaskStore();

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { X, BookOpen, Calendar, Flag, Trash2, Diamond } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { MAX_TITLE_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/constants';
 import type { Priority, EnergyTag } from '@/types/task';
 import { ENERGY_TAGS } from '@/lib/energy_tags';
 import { TimeEstimateSelector } from './TimeEstimateSelector';
@@ -23,6 +24,36 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
   const task = tasks.find(t => t.id === taskId);
   const [localCompleted, setLocalCompleted] = useState(task?.isCompleted || false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [localTitle, setLocalTitle] = useState(task?.title || '');
+  const [localDesc, setLocalDesc] = useState(task?.description || '');
+
+  // Debounced DB write for text fields
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const debouncedUpdate = useCallback((field: string, value: string) => {
+    if (debounceRef.current[field]) clearTimeout(debounceRef.current[field]);
+    debounceRef.current[field] = setTimeout(() => {
+      updateTask(taskId, { [field]: value });
+    }, 500);
+  }, [taskId, updateTask]);
+
+  // Flush pending debounced writes on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceRef.current).forEach(clearTimeout);
+      // Persist any pending changes immediately
+      if (localTitle !== task?.title) updateTask(taskId, { title: localTitle });
+      if (localDesc !== (task?.description || '')) updateTask(taskId, { description: localDesc });
+    };
+  }, []);
+
+  // Sync local text state when switching tasks
+  useEffect(() => {
+    if (task) {
+      setLocalTitle(task.title);
+      setLocalDesc(task.description || '');
+    }
+  }, [taskId]);
 
   // Keep local state in sync from parent unless mid-animation
   useEffect(() => {
@@ -102,8 +133,13 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
               )}
             </motion.button>
             <textarea
-              value={task.title}
-              onChange={e => updateTask(task.id, { title: e.target.value })}
+              value={localTitle}
+              onChange={e => {
+                const val = e.target.value.slice(0, MAX_TITLE_LENGTH);
+                setLocalTitle(val);
+                debouncedUpdate('title', val);
+              }}
+              maxLength={MAX_TITLE_LENGTH}
               className={cn(
                 "flex-1 bg-transparent text-lg font-semibold outline-none resize-none align-top overflow-hidden min-h-[28px]",
                 localCompleted ? "line-through text-muted-foreground" : "text-foreground"
@@ -124,8 +160,13 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
 
           {/* Description */}
           <textarea
-            value={task.description || ''}
-            onChange={e => updateTask(task.id, { description: e.target.value })}
+            value={localDesc}
+            onChange={e => {
+              const val = e.target.value.slice(0, MAX_DESCRIPTION_LENGTH);
+              setLocalDesc(val);
+              debouncedUpdate('description', val);
+            }}
+            maxLength={MAX_DESCRIPTION_LENGTH}
             placeholder="Add a description..."
             className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none min-h-[80px] p-3 rounded-lg border border-border focus:border-primary/30 focus:glow-sm transition-all"
           />
@@ -260,16 +301,36 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
           )}
 
           {/* Delete */}
-          <button
-            onClick={() => {
-              deleteTask(task.id);
-              closeDetailPanel();
-            }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-auto text-sm font-mono text-destructive bg-destructive/10 md:bg-transparent md:hover:bg-destructive/10 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete Task
-          </button>
+          {showDeleteConfirm ? (
+            <div className="w-full flex flex-col items-center gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+              <p className="text-xs font-mono text-destructive">Delete this task permanently?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="text-xs font-mono px-3 py-1.5 rounded-md border border-border hover:surface-3 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    deleteTask(task.id);
+                    closeDetailPanel();
+                  }}
+                  className="text-xs font-mono px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-auto text-sm font-mono text-destructive bg-destructive/10 md:bg-transparent md:hover:bg-destructive/10 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Task
+            </button>
+          )}
         </div>
       </motion.aside>
     </>

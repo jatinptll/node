@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Priority } from '@/types/task';
+import { MAX_TITLE_LENGTH } from '@/lib/constants';
 
 const priorities: { id: Priority; label: string; color: string }[] = [
     { id: 'p1', label: 'Urgent', color: '#EF4444' },
@@ -129,6 +130,7 @@ export const QuickAdd = ({ variant = 'header' }: { variant?: 'header' | 'dashboa
                             onChange={e => setTitle(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                             autoFocus
+                            maxLength={MAX_TITLE_LENGTH}
                             className="h-11 text-sm font-mono"
                         />
 

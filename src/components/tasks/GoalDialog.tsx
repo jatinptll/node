@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTaskStore } from '@/store/taskStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,15 @@ export const GoalDialog = ({ open, onOpenChange, goalId }: GoalDialogProps) => {
     const [title, setTitle] = useState(existingGoal?.title || '');
     const [timeframe, setTimeframe] = useState<GoalTimeframe>(existingGoal?.timeframe || 'monthly');
     const [targetDate, setTargetDate] = useState(existingGoal?.targetDate || '');
+
+    // Sync form fields when the dialog opens or goalId changes
+    useEffect(() => {
+        if (open) {
+            setTitle(existingGoal?.title || '');
+            setTimeframe(existingGoal?.timeframe || 'monthly');
+            setTargetDate(existingGoal?.targetDate || '');
+        }
+    }, [open, goalId]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

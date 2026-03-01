@@ -1,23 +1,14 @@
 import { create } from 'zustand';
-import type { Task, TaskList, Workspace, Section, KanbanColumn, Priority, TaskStatus, Goal } from '@/types/task';
+import type { Task, TaskList, Workspace, Priority, TaskStatus, Goal } from '@/types/task';
 import * as db from '@/lib/database';
 import { useUIStore } from '@/store/uiStore';
 import { getLocalDateString } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
-
 const defaultWorkspaces: Workspace[] = [
   { id: 'personal', name: 'Personal', type: 'personal' },
   { id: 'work', name: 'Work', type: 'work' },
   { id: 'projects', name: 'Projects', type: 'projects' },
-];
-
-const defaultColumns: KanbanColumn[] = [
-  { id: 'col-todo', listId: 'inbox', name: 'To Do', color: '#94A3B8', sortOrder: 0 },
-  { id: 'col-progress', listId: 'inbox', name: 'In Progress', color: '#3B82F6', sortOrder: 1 },
-  { id: 'col-review', listId: 'inbox', name: 'Review', color: '#F59E0B', sortOrder: 2 },
-  { id: 'col-done', listId: 'inbox', name: 'Done', color: '#10B981', sortOrder: 3 },
 ];
 
 // Default lists/tasks for unauthenticated users
@@ -61,8 +52,6 @@ interface TaskStore {
   lists: TaskList[];
   tasks: Task[];
   goals: Goal[];
-  sections: Section[];
-  columns: KanbanColumn[];
   userId: string | null;
   isLoaded: boolean;
 
@@ -102,8 +91,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   lists: [], // Start empty to prevent ghosting before DB loads
   tasks: defaultTasks,
   goals: [],
-  sections: [],
-  columns: defaultColumns,
   userId: null,
   isLoaded: false,
   olderTasksLoaded: false,
@@ -282,6 +269,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       tasks: state.tasks.filter(t => !listsToDelete.some(l => l.id === t.listId)),
     }));
 
+    // Reset active view if the user was viewing a list inside the deleted workspace
+    const currentListId = useUIStore.getState().selectedListId;
+    if (listsToDelete.some(l => l.id === currentListId)) {
+      useUIStore.getState().setSelectedListId('dashboard');
+    }
+
     if (userId) {
       persistToDB(
         async () => {
@@ -353,6 +346,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       lists: s.lists.filter(l => l.id !== listId),
       tasks: s.tasks.filter(t => t.listId !== listId),
     }));
+
+    // Reset active view if the user was viewing the deleted list
+    if (useUIStore.getState().selectedListId === listId) {
+      useUIStore.getState().setSelectedListId('dashboard');
+    }
 
     // Persist to Supabase — rollback on failure
     if (userId) {
@@ -491,9 +489,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return get().tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId));
     }
     if (listId === 'upcoming') {
-      const now = new Date();
-      const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return get().tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.includes(t.listId));
+      const todayStr = getLocalDateString();
+      const weekLaterStr = getLocalDateString(Date.now() + 7 * 86400000);
+      return get().tasks.filter(t => t.dueDate && t.dueDate >= todayStr && t.dueDate <= weekLaterStr && !t.isCompleted && !hiddenListIds.includes(t.listId));
     }
     if (listId === 'completed') {
       return get().tasks.filter(t => t.isCompleted && !hiddenListIds.includes(t.listId));

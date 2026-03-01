@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Clock } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils'; // wait, do I need cn? yes
+import { cn } from '@/lib/utils';
 
 export const formatEstimate = (mins?: number) => {
     if (!mins) return null;
@@ -52,7 +52,7 @@ export const TimeEstimateSelector = ({ value, onChange }: TimeEstimateSelectorPr
                 <div className="space-y-3">
                     <div className="text-xs font-mono text-muted-foreground uppercase">Time Estimate</div>
                     <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => handleSelect(0)} className="col-span-2 text-xs py-1.5 surface-2 hover:bg-destructive/10 hover:text-destructive rounded transition-colors">Clear</button>
+                        <button onClick={() => { onChange(undefined); setIsOpen(false); }} className="col-span-2 text-xs py-1.5 surface-2 hover:bg-destructive/10 hover:text-destructive rounded transition-colors">Clear</button>
                         {presets.map(mins => (
                             <button
                                 key={mins}

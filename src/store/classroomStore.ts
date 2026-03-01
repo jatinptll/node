@@ -10,6 +10,7 @@ import type { Task, TaskList } from '@/types/task';
 import { useTaskStore } from './taskStore';
 import { useUIStore } from './uiStore';
 import * as db from '@/lib/database';
+import { SUBJECT_COLORS } from '@/lib/constants';
 
 declare global {
     interface Window {
@@ -50,7 +51,6 @@ interface ClassroomState {
     clearState: () => void;
 }
 
-const SUBJECT_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#8B5CF6'];
 
 let nextTaskId = 1000;
 

@@ -149,7 +149,16 @@ const KanbanColumn = ({
               {tasks.length}
             </span>
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => {
+              // Focus the TaskCreationRow if viewing a real list, or use QuickAdd for virtual views
+              // For now, just scroll to top where TaskCreationRow is
+              document.querySelector('[placeholder="Task title..."]')?.scrollIntoView({ behavior: 'smooth' });
+              (document.querySelector('[placeholder="Task title..."]') as HTMLElement)?.focus();
+            }}
+            title="Add a task"
+          >
             <Plus className="w-4 h-4" />
           </button>
         </div>

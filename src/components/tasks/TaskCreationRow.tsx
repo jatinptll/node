@@ -4,6 +4,7 @@ import { useUIStore } from '@/store/uiStore';
 import { Plus } from 'lucide-react';
 import type { Priority } from '@/types/task';
 import { TimeEstimateSelector } from './TimeEstimateSelector';
+import { MAX_TITLE_LENGTH } from '@/lib/constants';
 
 export const TaskCreationRow = ({ listId, goalId }: { listId?: string, goalId?: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -61,6 +62,7 @@ export const TaskCreationRow = ({ listId, goalId }: { listId?: string, goalId?: 
         onChange={e => setTitle(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Task title..."
+        maxLength={MAX_TITLE_LENGTH}
         className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none mb-2"
       />
       <div className="flex items-center justify-between">

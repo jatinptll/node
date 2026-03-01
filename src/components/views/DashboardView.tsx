@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import {
-    CheckCircle2, Circle, Clock, AlertTriangle, TrendingUp, Target,
-    Flame, CalendarDays, BookOpen, ArrowUpRight, ChevronRight,
-    BarChart3, Zap, Trophy, Star, ArrowDown, ArrowUp, SlidersHorizontal, ChevronDown
+    CheckCircle2, Clock, AlertTriangle, Target,
+    CalendarDays, BookOpen, ArrowUpRight, ChevronRight,
+    Zap, Trophy, ArrowDown, ArrowUp, ChevronDown
 } from 'lucide-react';
 import { cn, getLocalDateString } from '@/lib/utils';
 import type { Task, Priority } from '@/types/task';
@@ -33,19 +33,6 @@ function getGreeting() {
     if (h < 12) return 'Good morning';
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
-}
-
-function getDayOfYear(date: Date) {
-    const start = new Date(date.getFullYear(), 0, 0);
-    const diff = date.getTime() - start.getTime();
-    return Math.floor(diff / 86400000);
-}
-
-function getWeekNumber(date: Date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
 /* ──────────────── Stat Card ──────────────── */
@@ -295,11 +282,11 @@ const ActivityHeatmap = ({ tasks }: { tasks: Task[] }) => {
 
 /* ──────────────── Upcoming Deadlines ──────────────── */
 
-const DeadlineItem = ({ task, onClick }: { task: Task; onClick: () => void }) => {
-    const dueDate = task.dueDate ? new Date(task.dueDate) : null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const daysUntil = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000) : null;
+const DeadlineItem = ({ task, listName, onClick }: { task: Task; listName: string; onClick: () => void }) => {
+    const todayStr = getLocalDateString();
+    const daysUntil = task.dueDate
+        ? Math.round((new Date(task.dueDate + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime()) / 86400000)
+        : null;
 
     const urgencyColor = daysUntil !== null
         ? daysUntil < 0 ? 'text-red-400' : daysUntil === 0 ? 'text-amber-400' : daysUntil <= 2 ? 'text-orange-400' : 'text-muted-foreground'
@@ -317,7 +304,7 @@ const DeadlineItem = ({ task, onClick }: { task: Task; onClick: () => void }) =>
             <div className={cn("w-2 h-2 rounded-full flex-shrink-0", daysUntil !== null && daysUntil < 0 ? "bg-red-400 animate-pulse" : "bg-muted-foreground/40")} />
             <div className="flex-1 min-w-0 text-left">
                 <p className="text-sm text-foreground truncate">{task.title}</p>
-                <p className="text-[10px] text-muted-foreground font-mono">{task.listId}</p>
+                <p className="text-[10px] text-muted-foreground font-mono">{listName}</p>
             </div>
             <div className="flex items-center gap-1.5">
                 {task.source === 'classroom' && <BookOpen className="w-3 h-3 text-primary" />}
@@ -328,83 +315,7 @@ const DeadlineItem = ({ task, onClick }: { task: Task; onClick: () => void }) =>
     );
 };
 
-/* ──────────────── Weekly Sparkline ──────────────── */
 
-const WeeklySparkline = ({ tasks }: { tasks: Task[] }) => {
-    const data = useMemo(() => {
-        const days: number[] = [];
-        const today = new Date();
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const key = getLocalDateString(d);
-            const count = tasks.filter(t => t.completedAt && getLocalDateString(t.completedAt) === key).length;
-            days.push(count);
-        }
-        return days;
-    }, [tasks]);
-
-    const max = Math.max(...data, 1);
-    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const today = new Date().getDay();
-    const orderedLabels: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-        const idx = (today - i + 7) % 7;
-        orderedLabels.push(dayLabels[idx === 0 ? 6 : idx - 1]);
-    }
-
-    return (
-        <div className="flex items-end gap-1.5 h-16">
-            {data.map((val, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <motion.div
-                        className="w-full rounded-t-sm bg-gradient-to-t from-purple-600 to-purple-400 min-h-[2px]"
-                        initial={{ height: 0 }}
-                        animate={{ height: `${Math.max((val / max) * 100, 4)}%` }}
-                        transition={{ duration: 0.6, delay: i * 0.08 }}
-                    />
-                    <span className="text-[9px] font-mono text-muted-foreground">{orderedLabels[i]}</span>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-/* ──────────────── Time Range Dropdown ──────────────── */
-
-const TimeRangeDropdown = ({ selected, onChange }: { selected: 'week' | 'month' | 'all'; onChange: (v: 'week' | 'month' | 'all') => void }) => {
-    const [open, setOpen] = useState(false);
-    const labels = { week: 'Week', month: 'Month', all: 'All' };
-
-    return (
-        <div className="relative">
-            <button
-                onClick={() => setOpen(!open)}
-                className="flex items-center gap-1.5 px-3 h-8 rounded-lg border border-border text-xs font-mono text-muted-foreground hover:text-foreground hover:surface-3 transition-colors"
-            >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>{labels[selected]}</span>
-                <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
-            </button>
-            {open && (
-                <div className="absolute z-20 right-0 mt-1 w-28 rounded-md border border-border bg-popover shadow-elevation-2 py-1">
-                    {(['week', 'month', 'all'] as const).map(range => (
-                        <button
-                            key={range}
-                            onClick={() => { onChange(range); setOpen(false); }}
-                            className={cn(
-                                "w-full px-3 py-1.5 text-xs font-mono text-left hover:bg-surface-2 transition-colors capitalize",
-                                selected === range ? "text-primary font-medium" : "text-muted-foreground"
-                            )}
-                        >
-                            {labels[range]}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 /* ══════════════════════════════════════════
    MAIN DASHBOARD
@@ -416,7 +327,6 @@ export const DashboardView = () => {
     const { openDetailPanel } = useUIStore();
     const { hiddenListIds } = useUIStore();
     const { user } = useAuthStore();
-    const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'all'>('week');
     const [listDomainFilter, setListDomainFilter] = useState<string>('all');
     const [listDomainOpen, setListDomainOpen] = useState(false);
 
@@ -532,7 +442,6 @@ export const DashboardView = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <QuickAdd variant="dashboard" />
-                        <TimeRangeDropdown selected={selectedTimeRange} onChange={setSelectedTimeRange} />
                     </div>
                 </motion.div>
 
@@ -625,7 +534,7 @@ export const DashboardView = () => {
                         <div className="divide-y divide-border/50">
                             {stats.upcoming.length > 0 ? (
                                 stats.upcoming.map((task) => (
-                                    <DeadlineItem key={task.id} task={task} onClick={() => openDetailPanel(task.id)} />
+                                    <DeadlineItem key={task.id} task={task} listName={lists.find(l => l.id === task.listId)?.name || 'Unknown'} onClick={() => openDetailPanel(task.id)} />
                                 ))
                             ) : (
                                 <div className="px-5 py-10 text-center">

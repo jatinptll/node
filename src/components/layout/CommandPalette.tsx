@@ -5,7 +5,7 @@ import { Search, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export const CommandPalette = () => {
-  const { commandPaletteOpen, toggleCommandPalette, setSelectedListId } = useUIStore();
+  const { commandPaletteOpen, toggleCommandPalette, setSelectedListId, openDetailPanel } = useUIStore();
   const { tasks, lists } = useTaskStore();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,8 +66,8 @@ export const CommandPalette = () => {
                     key={r.id}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:surface-3 transition-colors text-left"
                     onClick={() => {
-                      if (r.type === 'list') setSelectedListId(r.listId);
-                      else setSelectedListId(r.listId);
+                      setSelectedListId(r.listId);
+                      if (r.type === 'task') openDetailPanel(r.id);
                       toggleCommandPalette();
                     }}
                   >
