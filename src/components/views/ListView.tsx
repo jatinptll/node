@@ -80,8 +80,8 @@ export const ListView = () => {
         </div>
       )}
 
-      {/* Completed section */}
-      {(completedTasks.length > 0 || !olderTasksLoaded) && (
+      {/* Completed section (hidden on upcoming view) */}
+      {selectedListId !== 'upcoming' && (completedTasks.length > 0 || !olderTasksLoaded) && (
         <div className="mt-6">
           <button
             onClick={() => setShowCompletedState(!showCompletedState)}

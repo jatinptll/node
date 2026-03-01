@@ -20,6 +20,7 @@ export const Header = () => {
 
   const isDashboard = selectedListId === 'dashboard';
   const isToday = selectedListId === 'today';
+  const isCoreView = ['upcoming', 'completed', 'insights'].includes(selectedListId);
 
   const currentList = lists.find(l => l.id === selectedListId);
   const currentGoal = useTaskStore(s => s.goals.find(g => g.id === selectedListId));
@@ -29,7 +30,7 @@ export const Header = () => {
     : currentList?.name
     || currentGoal?.title
     || (selectedListId === 'today' ? 'Today' : selectedListId === 'upcoming' ? 'Upcoming'
-      : selectedListId === 'completed' ? 'Completed' : selectedListId);
+      : selectedListId === 'completed' ? 'Completed' : selectedListId === 'insights' ? 'Insights' : selectedListId);
 
   return (
     <header className="flex flex-col border-b border-border flex-shrink-0 bg-background">
@@ -56,10 +57,10 @@ export const Header = () => {
             <span className="text-xs font-mono hidden sm:inline">⌘K</span>
           </button>
 
-          {!isDashboard && !isGoal && !isToday && <QuickAdd variant="header" />}
+          {!isDashboard && !isGoal && !isToday && !isCoreView && <QuickAdd variant="header" />}
 
           {/* View switcher on large screens */}
-          {!isDashboard && !isGoal && !isToday && (
+          {!isDashboard && !isGoal && !isToday && !isCoreView && (
             <div className="hidden sm:flex items-center border border-border rounded-lg p-0.5">
               {views.map(v => (
                 <button
@@ -85,7 +86,7 @@ export const Header = () => {
       </div>
 
       {/* Sub-bar for view switcher on mobile */}
-      {!isDashboard && !isGoal && !isToday && (
+      {!isDashboard && !isGoal && !isToday && !isCoreView && (
         <div className="h-12 border-t border-border flex items-center px-4 sm:hidden bg-background overflow-x-auto hide-scrollbar">
           <div className="flex items-center border border-border rounded-lg p-0.5 mx-auto w-full max-w-sm justify-between">
             {views.map(v => (

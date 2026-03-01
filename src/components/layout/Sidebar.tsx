@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/uiStore';
 import { useTaskStore } from '@/store/taskStore';
 import {
-  CalendarDays, CalendarRange, BarChart3, CheckCircle2,
+  Sun, CalendarRange, BarChart3, CheckCircle2,
   ChevronDown, ChevronRight, GraduationCap, Diamond,
   MoreHorizontal, Eye, EyeOff, Lightbulb
 } from 'lucide-react';
@@ -22,7 +22,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-  { id: 'today', label: 'Today', icon: CalendarDays },
+  { id: 'today', label: 'Today', icon: Sun },
   { id: 'upcoming', label: 'Upcoming', icon: CalendarRange },
   { id: 'completed', label: 'Completed', icon: CheckCircle2 },
   { id: 'insights', label: 'Insights', icon: Lightbulb },
