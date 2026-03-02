@@ -198,17 +198,17 @@ export const MorningPlanModal = () => {
                             </div>
 
                             {/* Footer */}
-                            <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+                            <div className="px-6 py-4 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
                                 <button
                                     onClick={handleDismiss}
-                                    className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors py-2 w-full sm:w-auto text-center"
                                 >
                                     Maybe later
                                 </button>
                                 <button
                                     onClick={handleConfirm}
                                     disabled={visibleTasks.length === 0}
-                                    className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-mono font-medium hover:bg-primary/90 transition-all disabled:opacity-50"
+                                    className="flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-lg bg-primary text-primary-foreground text-sm font-mono font-medium hover:bg-primary/90 transition-all disabled:opacity-50 w-full sm:w-auto"
                                 >
                                     <Sparkles className="w-3.5 h-3.5" />
                                     Looks good, let's go
