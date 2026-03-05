@@ -1,11 +1,78 @@
+import { useState } from 'react';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { TaskItem } from '@/components/tasks/TaskItem';
 import { TaskCreationRow } from '@/components/tasks/TaskCreationRow';
 import { formatEstimate } from '@/components/tasks/TimeEstimateSelector';
 import { getLocalDateString } from '@/lib/utils';
-import { AlertCircle, CalendarDays, Sparkles, Clock } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { AlertCircle, CalendarDays, Sparkles, Clock, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+// ──────────────── Collapsible Section ────────────────
+
+const CollapsibleSection = ({
+    icon,
+    title,
+    subtitle,
+    count,
+    colorClass,
+    children,
+    defaultOpen = true,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    subtitle?: string;
+    count: number;
+    colorClass: string;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+}) => {
+    const [open, setOpen] = useState(defaultOpen);
+
+    return (
+        <div className="space-y-3">
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full flex items-center gap-2 group cursor-pointer"
+            >
+                <h3 className={cn("text-sm font-mono uppercase tracking-widest flex items-center gap-2", colorClass)}>
+                    {icon}
+                    {title}
+                </h3>
+                <span className={cn(
+                    "text-[10px] font-mono px-1.5 py-0.5 rounded-full",
+                    colorClass,
+                    "opacity-60"
+                )}>
+                    {count}
+                </span>
+                <ChevronDown className={cn(
+                    "w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform duration-200",
+                    !open && "-rotate-90"
+                )} />
+            </button>
+            {subtitle && open && (
+                <p className="text-xs text-muted-foreground font-mono">{subtitle}</p>
+            )}
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                    >
+                        {children}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// ──────────────── Main View ────────────────
 
 export const TodayView = () => {
     const { tasks } = useTaskStore();
@@ -71,11 +138,13 @@ export const TodayView = () => {
 
             {/* Pinned from Morning Plan */}
             {pinnedTasks.length > 0 && (
-                <div className="space-y-3">
-                    <h3 className="text-sm font-mono text-amber-500 uppercase tracking-widest flex items-center gap-2">
-                        📌 Suggested Plan
-                    </h3>
-                    <p className="text-xs text-muted-foreground font-mono">Tasks from your morning plan.</p>
+                <CollapsibleSection
+                    icon="📌"
+                    title="Suggested Plan"
+                    subtitle="Tasks from your morning plan."
+                    count={pinnedTasks.length}
+                    colorClass="text-amber-500"
+                >
                     <div className="space-y-0.5">
                         <AnimatePresence mode="popLayout">
                             {pinnedTasks.map(task => (
@@ -83,16 +152,17 @@ export const TodayView = () => {
                             ))}
                         </AnimatePresence>
                     </div>
-                </div>
+                </CollapsibleSection>
             )}
 
             {/* Overdue */}
             {overdueTasks.length > 0 && (
-                <div className="space-y-3">
-                    <h3 className="text-sm font-mono text-destructive uppercase tracking-widest flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        Overdue
-                    </h3>
+                <CollapsibleSection
+                    icon={<AlertCircle className="w-4 h-4" />}
+                    title="Overdue"
+                    count={overdueTasks.length}
+                    colorClass="text-destructive"
+                >
                     <div className="space-y-0.5">
                         <AnimatePresence mode="popLayout">
                             {overdueTasks.map(task => (
@@ -100,15 +170,16 @@ export const TodayView = () => {
                             ))}
                         </AnimatePresence>
                     </div>
-                </div>
+                </CollapsibleSection>
             )}
 
             {/* Due Today */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-mono text-primary uppercase tracking-widest flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4" />
-                    Due Today
-                </h3>
+            <CollapsibleSection
+                icon={<CalendarDays className="w-4 h-4" />}
+                title="Due Today"
+                count={todayTasks.length}
+                colorClass="text-primary"
+            >
                 {todayTasks.length > 0 ? (
                     <div className="space-y-0.5">
                         <AnimatePresence mode="popLayout">
@@ -123,16 +194,17 @@ export const TodayView = () => {
                         <p className="text-sm font-mono text-muted-foreground">Nothing scheduled for today!</p>
                     </div>
                 )}
-            </div>
+            </CollapsibleSection>
 
             {/* Suggested */}
             {suggestedTasks.length > 0 && (
-                <div className="space-y-3">
-                    <h3 className="text-sm font-mono text-info uppercase tracking-widest flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Suggested for you
-                    </h3>
-                    <p className="text-xs text-muted-foreground font-mono">High priority or deep focus tasks from your backlog.</p>
+                <CollapsibleSection
+                    icon={<Sparkles className="w-4 h-4" />}
+                    title="Suggested for you"
+                    subtitle="High priority or deep focus tasks from your backlog."
+                    count={suggestedTasks.length}
+                    colorClass="text-info"
+                >
                     <div className="space-y-0.5">
                         <AnimatePresence mode="popLayout">
                             {suggestedTasks.map(task => (
@@ -140,7 +212,7 @@ export const TodayView = () => {
                             ))}
                         </AnimatePresence>
                     </div>
-                </div>
+                </CollapsibleSection>
             )}
 
         </div>

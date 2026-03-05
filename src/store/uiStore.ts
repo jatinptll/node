@@ -32,6 +32,7 @@ interface UIState {
   confirmDailyPlan: (taskIds: string[]) => void;
   dismissDailyPlan: () => void;
   isDailyPlanNeeded: () => boolean;
+  reopenDailyPlan: () => void;
 }
 
 function loadHiddenLists(): string[] {
@@ -130,9 +131,17 @@ export const useUIStore = create<UIState>((set, get) => ({
           set({ dailyPlanConfirmed: true, dailyPlanTaskIds: parsed.taskIds || [] });
           return false;
         }
-        if (parsed.dismissed) return false;
+        if (parsed.dismissed) {
+          set({ dailyPlanDismissed: true });
+          return false;
+        }
       } catch { /* fallthrough */ }
     }
     return true;
+  },
+  reopenDailyPlan: () => {
+    const todayKey = `node-daily-plan-${getLocalDateString()}`;
+    localStorage.removeItem(todayKey);
+    set({ dailyPlanConfirmed: false, dailyPlanDismissed: false, dailyPlanTaskIds: [] });
   },
 }));

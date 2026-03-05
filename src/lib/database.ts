@@ -359,3 +359,53 @@ export async function deleteGoal(userId: string, goalId: string): Promise<void> 
 
     if (error) throw error;
 }
+
+// ============================================
+// Insight Snapshots
+// ============================================
+
+export async function fetchLatestInsightSnapshot(userId: string): Promise<any | null> {
+    const { data, error } = await db
+        .from('insight_snapshots')
+        .select('*')
+        .eq('user_id', userId)
+        .order('week_start', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data || null;
+}
+
+export async function fetchPreviousInsightSnapshot(userId: string, currentWeekStart: string): Promise<any | null> {
+    const { data, error } = await db
+        .from('insight_snapshots')
+        .select('*')
+        .eq('user_id', userId)
+        .lt('week_start', currentWeekStart)
+        .order('week_start', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data || null;
+}
+
+export async function upsertInsightSnapshot(
+    userId: string,
+    weekStart: string,
+    payload: any[],
+    scorecard: Record<string, any>
+): Promise<void> {
+    const { error } = await db
+        .from('insight_snapshots')
+        .upsert({
+            user_id: userId,
+            week_start: weekStart,
+            payload,
+            scorecard,
+            computed_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,week_start' });
+
+    if (error) throw error;
+}

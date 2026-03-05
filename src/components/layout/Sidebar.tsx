@@ -29,7 +29,7 @@ const navItems = [
 ];
 
 export const Sidebar = () => {
-  const { sidebarCollapsed, selectedListId, setSelectedListId, hiddenListIds, toggleListVisibility } = useUIStore();
+  const { sidebarCollapsed, selectedListId, setSelectedListId, hiddenListIds, toggleListVisibility, dailyPlanConfirmed, dailyPlanTaskIds } = useUIStore();
   const { workspaces, lists, tasks, goals } = useTaskStore();
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [openWorkspaces, setOpenWorkspaces] = useState<Record<string, boolean>>({});
@@ -41,7 +41,20 @@ export const Sidebar = () => {
   const getUncompletedCount = (listId: string) => {
     if (listId === 'today') {
       const todayStr = new Date().toISOString().split('T')[0];
-      return tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId)).length;
+      const dueTodayIds = new Set(
+        tasks.filter(t => t.dueDate === todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId)).map(t => t.id)
+      );
+      // Also count overdue
+      const overdueIds = tasks.filter(t => t.dueDate && t.dueDate < todayStr && !t.isCompleted && !hiddenListIds.includes(t.listId)).map(t => t.id);
+      overdueIds.forEach(id => dueTodayIds.add(id));
+      // Add pinned plan tasks
+      if (dailyPlanConfirmed) {
+        dailyPlanTaskIds.forEach(id => {
+          const t = tasks.find(task => task.id === id);
+          if (t && !t.isCompleted) dueTodayIds.add(id);
+        });
+      }
+      return dueTodayIds.size;
     }
     if (listId === 'upcoming') {
       const now = new Date();

@@ -188,7 +188,7 @@ export const MorningPlanModal = () => {
                                             {/* Remove button */}
                                             <button
                                                 onClick={() => handleRemove(task.id)}
-                                                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
+                                                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
                                             >
                                                 <X className="w-3.5 h-3.5" />
                                             </button>

@@ -156,6 +156,13 @@ const AppContent = () => {
     }
   }, [user, isLoaded, isDailyPlanNeeded]);
 
+  // Re-show morning plan when reopenDailyPlan() resets the state
+  useEffect(() => {
+    if (user && isLoaded && !dailyPlanDismissed && !dailyPlanConfirmed && morningPlanChecked.current) {
+      setShowMorningPlan(true);
+    }
+  }, [dailyPlanDismissed, dailyPlanConfirmed, user, isLoaded]);
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

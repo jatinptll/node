@@ -1,6 +1,6 @@
 import { useUIStore } from '@/store/uiStore';
 import { useTaskStore } from '@/store/taskStore';
-import { PanelLeftClose, PanelLeft, Search, List, Columns3, Calendar, Grid3X3 } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Search, List, Columns3, Calendar, Grid3X3, Sparkles } from 'lucide-react';
 import type { ViewType } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { UserMenu } from './UserMenu';
@@ -15,7 +15,7 @@ const views: { id: ViewType; icon: typeof List; label: string }[] = [
 ];
 
 export const Header = () => {
-  const { sidebarCollapsed, toggleSidebar, activeView, setActiveView, toggleCommandPalette, selectedListId } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, activeView, setActiveView, toggleCommandPalette, selectedListId, reopenDailyPlan } = useUIStore();
   const { lists } = useTaskStore();
 
   const isDashboard = selectedListId === 'dashboard';
@@ -58,6 +58,18 @@ export const Header = () => {
           </button>
 
           {!isDashboard && !isGoal && !isToday && !isCoreView && <QuickAdd variant="header" />}
+
+          {/* AI Plan button — only on core pages */}
+          {(isDashboard || isToday || isCoreView) && (
+            <button
+              onClick={reopenDailyPlan}
+              className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium border border-amber-400/30 bg-amber-400/10 text-amber-500 hover:bg-amber-400/20 hover:border-amber-400/50 transition-all"
+              title="AI Daily Plan"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-xs font-mono">Plan</span>
+            </button>
+          )}
 
           {/* View switcher on large screens */}
           {!isDashboard && !isGoal && !isToday && !isCoreView && (
