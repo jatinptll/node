@@ -63,12 +63,10 @@ export const Header = () => {
           {(isDashboard || isToday || isCoreView) && (
             <button
               onClick={openCheckIn}
-              className="node-mind-btn group"
+              className="node-mind-btn"
               title="Node Mind"
             >
-              <div className="node-mind-btn-inner">
-                <span className="font-mono text-[14px] font-medium text-[#E0E0E0] tracking-tight">N<span className="animate-pulse">*</span></span>
-              </div>
+              <span className="font-mono leading-none"><span className="text-[16px] font-bold">N</span><span className="node-mind-star text-[11px] font-bold">*</span></span>
             </button>
           )}
 

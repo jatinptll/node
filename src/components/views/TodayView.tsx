@@ -33,29 +33,31 @@ const CollapsibleSection = ({
 
     return (
         <div className="space-y-3">
-            <button
-                onClick={() => setOpen(!open)}
-                className="w-full flex items-center gap-2 group cursor-pointer"
-            >
-                <h3 className={cn("text-sm font-mono uppercase tracking-widest flex items-center gap-2", colorClass)}>
-                    {icon}
-                    {title}
-                </h3>
-                <span className={cn(
-                    "text-[10px] font-mono px-1.5 py-0.5 rounded-full",
-                    colorClass,
-                    "opacity-60"
-                )}>
-                    {count}
-                </span>
-                <ChevronDown className={cn(
-                    "w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform duration-200",
-                    !open && "-rotate-90"
-                )} />
-            </button>
-            {subtitle && open && (
-                <p className="text-xs text-muted-foreground font-mono">{subtitle}</p>
-            )}
+            <div>
+                <button
+                    onClick={() => setOpen(!open)}
+                    className="w-full flex items-center gap-2 group cursor-pointer"
+                >
+                    <h3 className={cn("text-sm font-mono uppercase tracking-widest flex items-center gap-2", colorClass)}>
+                        {icon}
+                        {title}
+                    </h3>
+                    <span className={cn(
+                        "text-[10px] font-mono px-1.5 py-0.5 rounded-full",
+                        colorClass,
+                        "opacity-60"
+                    )}>
+                        {count}
+                    </span>
+                    <ChevronDown className={cn(
+                        "w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform duration-200",
+                        !open && "-rotate-90"
+                    )} />
+                </button>
+                {subtitle && open && (
+                    <p className="text-xs text-muted-foreground font-mono mt-1 opacity-80">{subtitle}</p>
+                )}
+            </div>
             <AnimatePresence initial={false}>
                 {open && (
                     <motion.div
@@ -216,7 +218,7 @@ export const TodayView = () => {
                     title="Suggested for you"
                     subtitle={
                         <span>
-                            Ranked by priority, energy fit, and time of day <span className="opacity-60">· Updates as your day changes</span>
+                            <span className="opacity-60">Updates as your day changes</span>
                         </span>
                     }
                     count={suggestedTasks.length}

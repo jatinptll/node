@@ -240,7 +240,7 @@ export const CheckInPanel = ({ onClose }: CheckInPanelProps) => {
                                         : "text-muted-foreground hover:bg-surface-2/50"
                                 )}
                             >
-                                For me now
+                                For now
                             </button>
                             <button
                                 onClick={() => setActiveTab('chat')}
