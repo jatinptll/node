@@ -15,7 +15,7 @@ const views: { id: ViewType; icon: typeof List; label: string }[] = [
 ];
 
 export const Header = () => {
-  const { sidebarCollapsed, toggleSidebar, activeView, setActiveView, toggleCommandPalette, selectedListId, reopenDailyPlan } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, activeView, setActiveView, toggleCommandPalette, selectedListId, openCheckIn } = useUIStore();
   const { lists } = useTaskStore();
 
   const isDashboard = selectedListId === 'dashboard';
@@ -59,15 +59,16 @@ export const Header = () => {
 
           {!isDashboard && !isGoal && !isToday && !isCoreView && <QuickAdd variant="header" />}
 
-          {/* AI Plan button — only on core pages */}
+          {/* Node Mind button — only on core pages */}
           {(isDashboard || isToday || isCoreView) && (
             <button
-              onClick={reopenDailyPlan}
-              className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium border border-amber-400/30 bg-amber-400/10 text-amber-500 hover:bg-amber-400/20 hover:border-amber-400/50 transition-all"
-              title="AI Daily Plan"
+              onClick={openCheckIn}
+              className="node-mind-btn group"
+              title="Node Mind"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-xs font-mono">Plan</span>
+              <div className="node-mind-btn-inner">
+                <span className="font-mono text-[14px] font-medium text-[#E0E0E0] tracking-tight">N<span className="animate-pulse">*</span></span>
+              </div>
             </button>
           )}
 

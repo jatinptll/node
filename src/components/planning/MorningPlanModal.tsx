@@ -6,6 +6,7 @@ import { getLocalDateString } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { X, Sparkles, Clock, Flag, Target, CheckCircle2 } from 'lucide-react';
 import { formatEstimate } from '@/components/tasks/TimeEstimateSelector';
+import { scoreTasks, getTimeBucket } from '@/lib/taskScoring';
 import type { Task, Priority } from '@/types/task';
 
 const priorityConfig: Record<Priority, { label: string; color: string }> = {
@@ -15,55 +16,29 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
     p4: { label: 'P4', color: '#94A3B8' },
 };
 
-function scoreTasks(tasks: Task[], todayStr: string, tomorrowStr: string): (Task & { score: number })[] {
-    return tasks.map(t => {
-        let score = 0;
-
-        // Overdue: highest priority
-        if (t.dueDate && t.dueDate < todayStr) score += 100;
-        // Due today
-        if (t.dueDate === todayStr) score += 80;
-        // Due tomorrow
-        if (t.dueDate === tomorrowStr) score += 40;
-
-        // Priority boost
-        if (t.priority === 'p1') score += 30;
-        if (t.priority === 'p2') score += 20;
-        if (t.priority === 'p3') score += 5;
-
-        // Energy tag variety
-        if (t.energyTag === 'deep_focus') score += 15;
-        if (t.energyTag === 'quick_win') score += 12;
-
-        // Goal-linked boost
-        if (t.goalId) score += 10;
-
-        // Deferred tasks need attention
-        if ((t.deferralCount || 0) >= 2) score += 8;
-
-        return { ...t, score };
-    }).sort((a, b) => b.score - a.score);
-}
-
 export const MorningPlanModal = () => {
     const { tasks } = useTaskStore();
-    const { confirmDailyPlan, dismissDailyPlan } = useUIStore();
+    const { confirmDailyPlan, dismissDailyPlan, dailyPlanDismissCount } = useUIStore();
     const { hiddenListIds } = useUIStore();
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const [confirmed, setConfirmed] = useState(false);
 
     const todayStr = getLocalDateString();
     const tomorrowStr = getLocalDateString(Date.now() + 86400000);
+    const timeBucket = getTimeBucket();
 
     const suggestedTasks = useMemo(() => {
         const active = tasks.filter(t => !t.isCompleted && !hiddenListIds.includes(t.listId));
-        const scored = scoreTasks(active, todayStr, tomorrowStr);
+        const scored = scoreTasks(active, timeBucket, todayStr, tomorrowStr);
         // Cap at 7 tasks
         return scored.slice(0, 7);
-    }, [tasks, todayStr, tomorrowStr, hiddenListIds]);
+    }, [tasks, todayStr, tomorrowStr, hiddenListIds, timeBucket]);
 
     const visibleTasks = suggestedTasks.filter(t => !removedIds.has(t.id));
     const totalEstimate = visibleTasks.reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
+
+    // Third-time variant: softer tone
+    const isThirdAttempt = dailyPlanDismissCount >= 2;
 
     const getGreeting = () => {
         const h = new Date().getHours();
@@ -132,7 +107,10 @@ export const MorningPlanModal = () => {
                                     <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Daily Plan</span>
                                 </div>
                                 <h2 className="text-xl font-bold text-foreground">
-                                    {getGreeting()}. Here's what Node suggests for today.
+                                    {isThirdAttempt
+                                        ? "Last check — here's what Node has for you today. No pressure."
+                                        : `${getGreeting()}. Here's your suggested plan for today.`
+                                    }
                                 </h2>
                                 {totalEstimate > 0 && (
                                     <p className="text-xs text-muted-foreground font-mono mt-2 flex items-center gap-1">
@@ -182,6 +160,10 @@ export const MorningPlanModal = () => {
                                                             Goal
                                                         </span>
                                                     )}
+                                                    {/* Why label */}
+                                                    <span className="text-[10px] font-mono text-muted-foreground/60">
+                                                        • {task.reason}
+                                                    </span>
                                                 </div>
                                             </div>
 

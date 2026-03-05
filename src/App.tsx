@@ -17,6 +17,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
 import { FocusOverlay } from "@/components/focus/FocusOverlay";
 import { MorningPlanModal } from "@/components/planning/MorningPlanModal";
+import { CheckInPanel } from "@/components/planning/CheckInPanel";
 
 const queryClient = new QueryClient();
 
@@ -76,7 +77,7 @@ const AppContent = () => {
   const { initialize, user, isInitialized } = useAuthStore();
   const { loadUserData, isLoaded } = useTaskStore();
   const { loadSyncState } = useClassroomStore();
-  const { isDailyPlanNeeded, dailyPlanDismissed, dailyPlanConfirmed } = useUIStore();
+  const { isDailyPlanNeeded, dailyPlanDismissed, dailyPlanConfirmed, checkInOpen, closeCheckIn } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [showMorningPlan, setShowMorningPlan] = useState(false);
@@ -127,6 +128,14 @@ const AppContent = () => {
           loadUserData(user.id);
           lastLoadTime = Date.now();
         }
+
+        // Re-check if morning plan is needed (handles dismiss-count < 3 re-shows)
+        if (morningPlanChecked.current && !useUIStore.getState().dailyPlanConfirmed) {
+          const needed = useUIStore.getState().isDailyPlanNeeded();
+          if (needed) {
+            setShowMorningPlan(true);
+          }
+        }
       }
     };
 
@@ -156,12 +165,13 @@ const AppContent = () => {
     }
   }, [user, isLoaded, isDailyPlanNeeded]);
 
-  // Re-show morning plan when reopenDailyPlan() resets the state
+  // When the modal is dismissed, hide it. The 3-dismiss logic in uiStore handles whether
+  // it should come back on next visibility change.
   useEffect(() => {
-    if (user && isLoaded && !dailyPlanDismissed && !dailyPlanConfirmed && morningPlanChecked.current) {
-      setShowMorningPlan(true);
+    if (dailyPlanDismissed || dailyPlanConfirmed) {
+      setShowMorningPlan(false);
     }
-  }, [dailyPlanDismissed, dailyPlanConfirmed, user, isLoaded]);
+  }, [dailyPlanDismissed, dailyPlanConfirmed]);
 
   return (
     <Routes>
@@ -174,6 +184,7 @@ const AppContent = () => {
             {showMorningPlan && !dailyPlanDismissed && !dailyPlanConfirmed && (
               <MorningPlanModal />
             )}
+            {checkInOpen && <CheckInPanel onClose={closeCheckIn} />}
           </ProtectedRoute>
         }
       />

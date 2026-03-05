@@ -29,10 +29,14 @@ interface UIState {
   dailyPlanConfirmed: boolean;
   dailyPlanDismissed: boolean;
   dailyPlanTaskIds: string[];
+  dailyPlanDismissCount: number;
   confirmDailyPlan: (taskIds: string[]) => void;
   dismissDailyPlan: () => void;
   isDailyPlanNeeded: () => boolean;
-  reopenDailyPlan: () => void;
+  // Check-in panel
+  checkInOpen: boolean;
+  openCheckIn: () => void;
+  closeCheckIn: () => void;
 }
 
 function loadHiddenLists(): string[] {
@@ -59,6 +63,45 @@ async function syncHiddenListsToCloud(ids: string[]) {
     }
   } catch (err) {
     console.error('Failed to sync hidden lists to cloud:', err);
+  }
+}
+
+// ── Daily plan meta: local + cloud sync ──
+
+function loadDailyPlanLocal(): { confirmed: boolean; dismissed: boolean; taskIds: string[]; dismissCount: number } {
+  const todayKey = `node-daily-plan-${getLocalDateString()}`;
+  try {
+    const stored = localStorage.getItem(todayKey);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        confirmed: !!parsed.confirmed,
+        dismissed: !!parsed.dismissed,
+        taskIds: parsed.taskIds || [],
+        dismissCount: parsed.dismissCount || 0,
+      };
+    }
+  } catch { /* fallthrough */ }
+  return { confirmed: false, dismissed: false, taskIds: [], dismissCount: 0 };
+}
+
+function saveDailyPlanLocal(data: { confirmed?: boolean; dismissed?: boolean; taskIds?: string[]; dismissCount?: number }) {
+  const todayKey = `node-daily-plan-${getLocalDateString()}`;
+  const existing = loadDailyPlanLocal();
+  const merged = { ...existing, ...data };
+  localStorage.setItem(todayKey, JSON.stringify(merged));
+}
+
+async function syncDailyPlanToCloud(meta: { lastConfirmedDate?: string; dismissCountToday?: number }) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase as any).from('profiles').update({
+        daily_plan_meta: meta,
+      }).eq('id', session.user.id);
+    }
+  } catch (err) {
+    console.error('Failed to sync daily plan meta:', err);
   }
 }
 
@@ -106,42 +149,57 @@ export const useUIStore = create<UIState>((set, get) => ({
   focusStartedAt: null,
   startFocusSession: (taskId) => set({ focusTaskId: taskId, focusStartedAt: Date.now() }),
   endFocusSession: () => set({ focusTaskId: null, focusStartedAt: null }),
-  // Daily Plan
+
+  // ── Daily Plan (with 3-dismiss limit) ──
   dailyPlanConfirmed: false,
   dailyPlanDismissed: false,
   dailyPlanTaskIds: [],
+  dailyPlanDismissCount: 0,
+
   confirmDailyPlan: (taskIds) => {
-    const todayKey = `node-daily-plan-${getLocalDateString()}`;
-    localStorage.setItem(todayKey, JSON.stringify({ confirmed: true, taskIds }));
+    const today = getLocalDateString();
+    saveDailyPlanLocal({ confirmed: true, taskIds, dismissCount: 0 });
     set({ dailyPlanConfirmed: true, dailyPlanTaskIds: taskIds });
+    syncDailyPlanToCloud({ lastConfirmedDate: today, dismissCountToday: 0 });
   },
+
   dismissDailyPlan: () => {
-    const todayKey = `node-daily-plan-${getLocalDateString()}`;
-    localStorage.setItem(todayKey, JSON.stringify({ dismissed: true }));
-    set({ dailyPlanDismissed: true });
-  },
-  isDailyPlanNeeded: () => {
-    const todayKey = `node-daily-plan-${getLocalDateString()}`;
-    const stored = localStorage.getItem(todayKey);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.confirmed) {
-          // Restore pinned tasks
-          set({ dailyPlanConfirmed: true, dailyPlanTaskIds: parsed.taskIds || [] });
-          return false;
-        }
-        if (parsed.dismissed) {
-          set({ dailyPlanDismissed: true });
-          return false;
-        }
-      } catch { /* fallthrough */ }
+    const currentCount = get().dailyPlanDismissCount;
+    const newCount = currentCount + 1;
+
+    if (newCount >= 3) {
+      // Third dismissal — mark as fully dismissed for the day
+      const today = getLocalDateString();
+      saveDailyPlanLocal({ dismissed: true, dismissCount: newCount });
+      set({ dailyPlanDismissed: true, dailyPlanDismissCount: newCount });
+      syncDailyPlanToCloud({ lastConfirmedDate: today, dismissCountToday: newCount });
+    } else {
+      // 1st or 2nd dismissal — close modal but allow it to return on next open
+      saveDailyPlanLocal({ dismissCount: newCount });
+      set({ dailyPlanDismissed: true, dailyPlanDismissCount: newCount });
     }
+  },
+
+  isDailyPlanNeeded: () => {
+    const local = loadDailyPlanLocal();
+
+    if (local.confirmed) {
+      set({ dailyPlanConfirmed: true, dailyPlanTaskIds: local.taskIds, dailyPlanDismissCount: local.dismissCount });
+      return false;
+    }
+    if (local.dismissed) {
+      // Fully dismissed (3 times) — don't show again
+      set({ dailyPlanDismissed: true, dailyPlanDismissCount: local.dismissCount });
+      return false;
+    }
+
+    // Restore dismiss count so modal knows which variation to show
+    set({ dailyPlanDismissCount: local.dismissCount, dailyPlanDismissed: false });
     return true;
   },
-  reopenDailyPlan: () => {
-    const todayKey = `node-daily-plan-${getLocalDateString()}`;
-    localStorage.removeItem(todayKey);
-    set({ dailyPlanConfirmed: false, dailyPlanDismissed: false, dailyPlanTaskIds: [] });
-  },
+
+  // ── Check-in Panel ──
+  checkInOpen: false,
+  openCheckIn: () => set({ checkInOpen: true }),
+  closeCheckIn: () => set({ checkInOpen: false }),
 }));

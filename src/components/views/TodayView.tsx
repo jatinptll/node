@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
 import { TaskItem } from '@/components/tasks/TaskItem';
@@ -8,6 +8,7 @@ import { getLocalDateString } from '@/lib/utils';
 import { AlertCircle, CalendarDays, Sparkles, Clock, ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { scoreTasks, getTimeBucket } from '@/lib/taskScoring';
 
 // ──────────────── Collapsible Section ────────────────
 
@@ -22,7 +23,7 @@ const CollapsibleSection = ({
 }: {
     icon: React.ReactNode;
     title: string;
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     count: number;
     colorClass: string;
     children: React.ReactNode;
@@ -79,6 +80,8 @@ export const TodayView = () => {
     const { hiddenListIds, dailyPlanConfirmed, dailyPlanTaskIds } = useUIStore();
 
     const todayStr = getLocalDateString();
+    const tomorrowStr = getLocalDateString(Date.now() + 86400000);
+    const timeBucket = getTimeBucket();
 
     const allActive = tasks.filter(t => !t.isCompleted && !hiddenListIds.includes(t.listId));
 
@@ -93,11 +96,21 @@ export const TodayView = () => {
             .filter((t): t is NonNullable<typeof t> => !!t && !t.isCompleted && !overdueTodayIds.has(t.id))
         : [];
 
-    // Suggested Tasks: No due date, but high priority or deep focus energy tag
-    const suggestedTasks = allActive.filter(t =>
-        !t.dueDate &&
-        (t.priority === 'p1' || t.priority === 'p2' || t.energyTag === 'deep_focus')
-    ).slice(0, 5); // Limit to 5 suggestions
+    // ── Suggested for You: full scoring algorithm ──
+    const suggestedTasks = useMemo(() => {
+        // Exclude tasks already shown in other sections
+        const excludeIds = new Set([
+            ...overdueTasks.map(t => t.id),
+            ...todayTasks.map(t => t.id),
+            ...pinnedTasks.map(t => t.id),
+        ]);
+
+        const candidates = allActive.filter(t => !excludeIds.has(t.id));
+        const scored = scoreTasks(candidates, timeBucket, todayStr, tomorrowStr);
+
+        // Return top 5
+        return scored.slice(0, 5);
+    }, [tasks, allActive, overdueTasks, todayTasks, pinnedTasks, timeBucket, todayStr, tomorrowStr]);
 
     const todayEstimatedMins = [...overdueTasks, ...todayTasks, ...pinnedTasks].reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
     const totalHours = todayEstimatedMins / 60;
@@ -196,19 +209,29 @@ export const TodayView = () => {
                 )}
             </CollapsibleSection>
 
-            {/* Suggested */}
+            {/* Suggested for You — full scoring with "why" labels */}
             {suggestedTasks.length > 0 && (
                 <CollapsibleSection
                     icon={<Sparkles className="w-4 h-4" />}
                     title="Suggested for you"
-                    subtitle="High priority or deep focus tasks from your backlog."
+                    subtitle={
+                        <span>
+                            Ranked by priority, energy fit, and time of day <span className="opacity-60">· Updates as your day changes</span>
+                        </span>
+                    }
                     count={suggestedTasks.length}
                     colorClass="text-info"
                 >
                     <div className="space-y-0.5">
                         <AnimatePresence mode="popLayout">
                             {suggestedTasks.map(task => (
-                                <TaskItem key={task.id} task={task} />
+                                <div key={task.id} className="relative">
+                                    <TaskItem task={task} />
+                                    {/* Why label overlay */}
+                                    <span className="absolute top-1/2 -translate-y-1/2 right-3 text-[9px] font-mono text-muted-foreground/50 hidden sm:inline pointer-events-none">
+                                        {task.reason}
+                                    </span>
+                                </div>
                             ))}
                         </AnimatePresence>
                     </div>
