@@ -201,7 +201,7 @@ ${systemContext}
                 'X-Title': 'Node',
             },
             body: JSON.stringify({
-                model: 'openai/gpt-oss-120b',
+                model: 'openai/gpt-4o-mini',
                 messages
             })
         });
