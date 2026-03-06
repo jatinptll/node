@@ -138,14 +138,12 @@ export const AskNodeMind = ({ onClose }: { onClose: () => void }) => {
 
         const context = buildNodeContext(tasks, goals, lists, workspaces, pinnedTaskIds);
 
-        const responseText = await askNodeMindChat(historyToKeep, context);
+        const response = await askNodeMindChat(historyToKeep, context);
 
-        if (responseText) {
-            setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
+        if (response.content) {
+            setMessages(prev => [...prev, { role: 'assistant', content: response.content }]);
         } else {
-            setError("Something went wrong. Try again.");
-            // Pop the user message so they can try again if we wanted, or just leave it.
-            // Leaving it is fine, the error shows inline.
+            setError(response.error || "Something went wrong. Try again.");
         }
 
         setLoading(false);

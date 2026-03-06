@@ -174,18 +174,14 @@ export function buildNodeContext(
 export async function askNodeMindChat(
     history: ChatMessage[],
     systemContext: string
-): Promise<string | null> {
+): Promise<{ content: string | null; error: string | null }> {
     try {
         if (!OPENROUTER_API_KEY) {
             console.error('[Node Mind] OPENROUTER_API_KEY missing');
-            return null;
+            return { content: null, error: 'API key is missing! Please make sure VITE_OPENROUTER_API_KEY is set in your production environment variables and redeploy.' };
         }
 
-        const fullSystemPrompt = `${NODE_MIND_SYSTEM_PROMPT}
-
----
-${systemContext}
----`;
+        const fullSystemPrompt = `${NODE_MIND_SYSTEM_PROMPT}\n\n---\n${systemContext}\n---`;
 
         const messages = [
             { role: 'system', content: fullSystemPrompt },
@@ -207,15 +203,16 @@ ${systemContext}
         });
 
         if (!response.ok) {
-            console.error('[Node Mind] HTTP error', response.status, await response.text());
-            return null;
+            const errText = await response.text();
+            console.error('[Node Mind] HTTP error', response.status, errText);
+            return { content: null, error: `OpenRouter error ${response.status}: ${errText}` };
         }
 
         const data = await response.json();
-        return data.choices?.[0]?.message?.content || null;
+        return { content: data.choices?.[0]?.message?.content || null, error: null };
 
-    } catch (err) {
+    } catch (err: any) {
         console.error('[Node Mind] Chat error', err);
-        return null;
+        return { content: null, error: `Network error: ${err.message}` };
     }
 }
