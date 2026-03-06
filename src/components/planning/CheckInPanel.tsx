@@ -130,11 +130,11 @@ export const CheckInPanel = ({ onClose }: CheckInPanelProps) => {
         const top15 = allScored.slice(0, 15);
 
         const userInput: CheckInInput = {
-            energy: selections.energy as any || undefined,
-            availableTime: selections.availableTime as any || undefined,
-            location: selections.location as any || undefined,
-            mood: selections.mood as any || undefined,
-            preference: selections.preference as any || undefined,
+            energy: (selections.energy as CheckInInput['energy']) || undefined,
+            availableTime: (selections.availableTime as CheckInInput['availableTime']) || undefined,
+            location: (selections.location as CheckInInput['location']) || undefined,
+            mood: (selections.mood as CheckInInput['mood']) || undefined,
+            preference: (selections.preference as CheckInInput['preference']) || undefined,
         };
 
         const candidateTasks: TaskContext[] = top15.map(t => ({
@@ -216,16 +216,17 @@ export const CheckInPanel = ({ onClose }: CheckInPanelProps) => {
                 exit={{ opacity: 0, y: 30, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className={cn(
-                    "relative z-10 w-full mx-4 rounded-2xl border border-border bg-background surface-1 shadow-elevation-3 overflow-hidden transition-all duration-300",
-                    activeTab === 'chat' ? "max-w-2xl min-h-[500px]" : "max-w-lg"
+                    "relative z-10 w-full mx-4 rounded-2xl overflow-hidden transition-all duration-300",
+                    "dark:node-mind-panel node-mind-panel-light",
+                    activeTab === 'chat' ? "max-w-2xl min-h-[500px]" : "max-w-lg bg-background"
                 )}
             >
                 {/* Header / Tabs */}
-                <div className="flex items-center justify-between px-2 pt-2 pb-0 border-b border-border/50">
+                <div className="relative z-20 flex items-center justify-between px-2 pt-2 pb-0 border-b border-[rgba(124,58,237,0.15)] bg-gradient-to-r from-[rgba(245,243,255,0.9)] to-[rgba(237,233,254,0.9)] dark:bg-none dark:border-[rgba(139,92,246,0.12)]">
                     <div className="flex items-center">
                         <div className="flex items-center gap-1.5 px-3 py-2">
-                            <span className="text-amber-500 leading-none">✦</span>
-                            <span className="text-sm font-semibold tracking-wide text-foreground">Node Mind</span>
+                            <span className="text-[#6d28d9] dark:text-[#a78bfa] leading-none node-mind-star-spin">✦</span>
+                            <span className="text-sm font-semibold tracking-wide text-[#4c1d95] dark:text-foreground">Node Mind</span>
                         </div>
 
                         <div className="h-4 w-[1px] bg-border mx-2" />
@@ -236,8 +237,8 @@ export const CheckInPanel = ({ onClose }: CheckInPanelProps) => {
                                 className={cn(
                                     "px-3 py-1.5 text-xs font-mono rounded-lg transition-all border border-transparent",
                                     activeTab === 'checkin'
-                                        ? "bg-surface-2 border-border text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:bg-surface-2/50"
+                                        ? "dark:bg-surface-2 bg-[rgba(124,58,237,0.12)] border-[rgba(124,58,237,0.25)] dark:text-foreground text-[#6d28d9] shadow-sm"
+                                        : "dark:text-muted-foreground text-[rgba(109,40,217,0.45)] hover:bg-surface-2/50"
                                 )}
                             >
                                 For now
@@ -247,8 +248,8 @@ export const CheckInPanel = ({ onClose }: CheckInPanelProps) => {
                                 className={cn(
                                     "px-3 py-1.5 text-xs font-mono rounded-lg transition-all border border-transparent flex items-center gap-1.5",
                                     activeTab === 'chat'
-                                        ? "bg-surface-2 border-border text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:bg-surface-2/50"
+                                        ? "dark:bg-surface-2 bg-[rgba(124,58,237,0.12)] border-[rgba(124,58,237,0.25)] dark:text-foreground text-[#6d28d9] shadow-sm"
+                                        : "dark:text-muted-foreground text-[rgba(109,40,217,0.45)] hover:bg-surface-2/50"
                                 )}
                             >
                                 Ask Node

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { ViewType } from '@/types/task';
 import { getLocalDateString } from '@/lib/utils';
+import type { ChatMessage } from '@/lib/nodeMind';
 
 interface UIState {
   sidebarCollapsed: boolean;
@@ -37,6 +38,9 @@ interface UIState {
   checkInOpen: boolean;
   openCheckIn: () => void;
   closeCheckIn: () => void;
+  // NodeMind Chat
+  nodeMindMessages: ChatMessage[];
+  setNodeMindMessages: (messages: ChatMessage[]) => void;
 }
 
 function loadHiddenLists(): string[] {
@@ -96,6 +100,7 @@ async function syncDailyPlanToCloud(meta: { lastConfirmedDate?: string; dismissC
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('profiles').update({
         daily_plan_meta: meta,
       }).eq('id', session.user.id);
@@ -202,4 +207,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   checkInOpen: false,
   openCheckIn: () => set({ checkInOpen: true }),
   closeCheckIn: () => set({ checkInOpen: false }),
+
+  // ── NodeMind Chat ──
+  nodeMindMessages: [],
+  setNodeMindMessages: (messages) => set({ nodeMindMessages: messages }),
 }));
