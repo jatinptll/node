@@ -4,6 +4,8 @@ import { CommandPalette } from './CommandPalette';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@/store/uiStore';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
+import { FloatingFeedbackButton } from '@/components/feedback/FloatingFeedbackButton';
+import { FeedbackModal } from '@/components/feedback/FeedbackModal';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   useKeyboardShortcuts();
@@ -20,6 +22,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
       <CommandPalette />
+      <FloatingFeedbackButton />
+      <FeedbackModal />
     </div>
   );
 };

@@ -41,6 +41,11 @@ interface UIState {
   // NodeMind Chat
   nodeMindMessages: ChatMessage[];
   setNodeMindMessages: (messages: ChatMessage[]) => void;
+  // Feedback Modal
+  feedbackModalOpen: boolean;
+  feedbackModalType: 'bug' | 'feature' | 'feedback' | null;
+  openFeedbackModal: (type?: 'bug' | 'feature' | 'feedback') => void;
+  closeFeedbackModal: () => void;
 }
 
 function loadHiddenLists(): string[] {
@@ -211,4 +216,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   // ── NodeMind Chat ──
   nodeMindMessages: [],
   setNodeMindMessages: (messages) => set({ nodeMindMessages: messages }),
+
+  // ── Feedback Modal ──
+  feedbackModalOpen: false,
+  feedbackModalType: null,
+  openFeedbackModal: (type) => set({ feedbackModalOpen: true, feedbackModalType: type || null }),
+  closeFeedbackModal: () => set({ feedbackModalOpen: false, feedbackModalType: null }),
 }));

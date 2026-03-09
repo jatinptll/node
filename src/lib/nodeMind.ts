@@ -98,7 +98,15 @@ TASK_SUGGESTIONS:
 [{"title":"string","priority":"p1"|"p2"|"p3"|"p4","estimatedMinutes":number,"energyTag":"deep_focus"|"quick_win"|"admin"|"creative"|"learning","reason":"one short sentence"}]
 END_TASK_SUGGESTIONS
 \`\`\`
-Include 3–5 tasks maximum. Always include this block after your normal text response when task creation is appropriate. Never include it for questions about existing tasks.`;
+Include 3–5 tasks maximum. Always include this block after your normal text response when task creation is appropriate. Never include it for questions about existing tasks.
+
+FEEDBACK ROUTING:
+If the user says anything like "I want to report a bug", "this doesn't work", "I have a suggestion", "I want to give feedback", "feature request", or similar:
+- Do NOT try to handle the submission yourself.
+- Respond with something like: "Want to report that properly so it gets tracked? I can open the feedback form for you."
+- Include this exact tag in your response: [OPEN_FEEDBACK_FORM]
+- The tag will be rendered as a clickable button that opens the feedback modal.
+- You can vary your wording but ALWAYS include the [OPEN_FEEDBACK_FORM] tag when routing to feedback.`;
 
 export function buildNodeContext(
     tasks: Task[],

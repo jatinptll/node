@@ -264,13 +264,16 @@ const TaskSuggestionCard = ({
 }
 
 // Extract actual tasks referenced in the message to make them clickable
-const MessageContent = ({ content, tasks, onTaskClick }: { content: string; tasks: Task[]; onTaskClick: (task: Task) => void }) => {
+const MessageContent = ({ content, tasks, onTaskClick, onOpenFeedback }: { content: string; tasks: Task[]; onTaskClick: (task: Task) => void; onOpenFeedback?: () => void }) => {
     const sortedTasks = useMemo(() => {
         return [...tasks].sort((a, b) => b.title.length - a.title.length);
     }, [tasks]);
 
+    const hasFeedbackTag = content.includes('[OPEN_FEEDBACK_FORM]');
+
     const processedContent = useMemo(() => {
         const text = content
+            .replace(/\[OPEN_FEEDBACK_FORM\]/g, '')
             .replace(/\\n/g, '\n')
             .replace(/\\•/g, '•')
             .replace(/(?:\s*)•(?:\s*)/g, '\n- ') // force Markdown lists on any raw bullets
@@ -370,6 +373,14 @@ const MessageContent = ({ content, tasks, onTaskClick }: { content: string; task
             >
                 {processedContent}
             </ReactMarkdown>
+            {hasFeedbackTag && onOpenFeedback && (
+                <button
+                    onClick={onOpenFeedback}
+                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white hover:shadow-[0_4px_16px_rgba(124,58,237,0.4)] hover:brightness-110 active:scale-[0.97] transition-all"
+                >
+                    <span>✦</span> Open Feedback Form
+                </button>
+            )}
         </div>
     );
 };
@@ -383,7 +394,7 @@ const STARTER_PROMPTS = [
 
 export const AskNodeMind = ({ onClose }: { onClose: () => void }) => {
     const { tasks, goals, lists, workspaces, addTask } = useTaskStore();
-    const { openDetailPanel, dailyPlanTaskIds, selectedListId, nodeMindMessages: messages, setNodeMindMessages: setMessages } = useUIStore();
+    const { openDetailPanel, dailyPlanTaskIds, selectedListId, nodeMindMessages: messages, setNodeMindMessages: setMessages, openFeedbackModal } = useUIStore();
 
     const pinnedTaskIds: string[] = dailyPlanTaskIds || [];
 
@@ -548,7 +559,7 @@ export const AskNodeMind = ({ onClose }: { onClose: () => void }) => {
                                         </div>
 
                                         <div className="flex-1 min-w-0 pt-1">
-                                            <MessageContent content={rawText} tasks={tasks} onTaskClick={handleTaskClick} />
+                                            <MessageContent content={rawText} tasks={tasks} onTaskClick={handleTaskClick} onOpenFeedback={() => { openFeedbackModal(); onClose(); }} />
                                             {suggestions && suggestions.length > 0 && (
                                                 <TaskSuggestionCard
                                                     suggestions={suggestions}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +18,8 @@ import { motion } from "framer-motion";
 import { FocusOverlay } from "@/components/focus/FocusOverlay";
 import { MorningPlanModal } from "@/components/planning/MorningPlanModal";
 import { CheckInPanel } from "@/components/planning/CheckInPanel";
+
+const AdminFeedbackPage = lazy(() => import("./pages/AdminFeedback"));
 
 const queryClient = new QueryClient();
 
@@ -185,6 +187,16 @@ const AppContent = () => {
               <MorningPlanModal />
             )}
             {checkInOpen && <CheckInPanel onClose={closeCheckIn} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/feedback"
+        element={
+          <ProtectedRoute>
+            <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>}>
+              <AdminFeedbackPage />
+            </Suspense>
           </ProtectedRoute>
         }
       />

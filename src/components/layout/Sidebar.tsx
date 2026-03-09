@@ -57,9 +57,9 @@ export const Sidebar = () => {
       return dueTodayIds.size;
     }
     if (listId === 'upcoming') {
-      const now = new Date();
-      const weekLater = new Date(now.getTime() + 7 * 86400000);
-      return tasks.filter(t => t.dueDate && new Date(t.dueDate) <= weekLater && !t.isCompleted && !hiddenListIds.includes(t.listId)).length;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const weekLaterStr = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+      return tasks.filter(t => t.dueDate && t.dueDate >= todayStr && t.dueDate <= weekLaterStr && !t.isCompleted && !hiddenListIds.includes(t.listId)).length;
     }
     return tasks.filter(t => t.listId === listId && !t.isCompleted).length;
   };
