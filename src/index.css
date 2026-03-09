@@ -4,6 +4,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safari performance: eliminate 300ms tap delay */
+html {
+  touch-action: manipulation;
+}
+
+/* Reduce heavy decorative animations on mobile / prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+  }
+}
+
+@media (max-width: 768px) {
+
+  /* On mobile: keep critical transitions (0.15s) but kill heavy ambient animations */
+  .node-mind-star,
+  .node-mind-star-spin,
+  .node-mind-avatar-pulse,
+  .initial-loader-logo {
+    animation: none !important;
+  }
+}
+
 @layer base {
   :root {
     /* Light Theme */
@@ -164,6 +192,15 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--purple-600));
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   ::selection {

@@ -313,6 +313,31 @@ export async function fetchProfile(userId: string) {
     return data;
 }
 
+export async function updateProfile(userId: string, updates: Record<string, any>): Promise<void> {
+    const { error } = await db
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId);
+
+    if (error) throw error;
+}
+
+export async function updateClassroomConnection(
+    userId: string,
+    email: string | null,
+    connectedAt: string | null
+): Promise<void> {
+    const { error } = await db
+        .from('profiles')
+        .update({
+            classroom_account_email: email,
+            classroom_connected_at: connectedAt,
+        })
+        .eq('id', userId);
+
+    if (error) throw error;
+}
+
 // ============================================
 // Goals
 // ============================================

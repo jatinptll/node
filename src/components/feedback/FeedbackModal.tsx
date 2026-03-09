@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, Loader2, Paperclip, Check } from 'lucide-react';
+import { X, Upload, Loader2, Paperclip, Check, Bug, Lightbulb, MessageCircle } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { submitFeedback, uploadFeedbackAttachment } from '@/lib/feedbackDb';
@@ -113,8 +113,8 @@ export const FeedbackModal = () => {
     const [severity, setSeverity] = useState<Severity>('medium');
     const [areas, setAreas] = useState<string[]>([]);
     const [impactRating, setImpactRating] = useState('');
-    const [includeIdentity, setIncludeIdentity] = useState(true);
-    const [includeSystemInfo, setIncludeSystemInfo] = useState(true);
+    const includeIdentity = true;
+    const includeSystemInfo = true;
     const [file, setFile] = useState<File | null>(null);
     const [filePreview, setFilePreview] = useState<string | null>(null);
 
@@ -162,7 +162,7 @@ export const FeedbackModal = () => {
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [type, title, description, severity, areas, impactRating, includeIdentity, includeSystemInfo, feedbackModalOpen, submitted]);
+    }, [type, title, description, severity, areas, impactRating, feedbackModalOpen, submitted]);
 
     const restoreDraft = useCallback(() => {
         const draft = loadDraft();
@@ -173,8 +173,6 @@ export const FeedbackModal = () => {
             setSeverity(draft.severity || 'medium');
             setAreas(draft.areas || []);
             setImpactRating(draft.impactRating || '');
-            setIncludeIdentity(draft.includeIdentity !== false);
-            setIncludeSystemInfo(draft.includeSystemInfo !== false);
         }
         setDraftRestoreOffer(false);
     }, [feedbackModalType]);
@@ -192,8 +190,6 @@ export const FeedbackModal = () => {
         setSeverity('medium');
         setAreas([]);
         setImpactRating('');
-        setIncludeIdentity(true);
-        setIncludeSystemInfo(true);
         setFile(null);
         setFilePreview(null);
         setSubmitError(null);
@@ -362,7 +358,7 @@ export const FeedbackModal = () => {
                     >
                         <div
                             className={cn(
-                                "relative w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
+                                "relative w-full max-w-[560px] max-h-[90vh] overflow-y-auto no-scrollbar rounded-2xl border shadow-2xl",
                                 "dark:bg-[radial-gradient(ellipse_at_top,rgba(30,20,50,0.97),rgba(10,5,20,0.98))] dark:border-[rgba(139,92,246,0.2)]",
                                 "bg-[radial-gradient(ellipse_70%_50%_at_50%_30%,rgba(167,139,250,0.08),transparent_70%),linear-gradient(145deg,#faf5ff,#f3e8ff_40%,#ede9fe)] border-[rgba(124,58,237,0.18)]",
                                 "dark:shadow-[0_0_40px_rgba(124,58,237,0.12)]",
@@ -522,24 +518,24 @@ export const FeedbackModal = () => {
                                         className="px-6 py-5 space-y-5"
                                     >
                                         {/* Field 1: Type Selector */}
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-3 gap-2">
                                             {([
-                                                { value: 'bug' as FeedbackType, emoji: '🐛', label: 'Bug Report' },
-                                                { value: 'feature' as FeedbackType, emoji: '💡', label: 'Feature Request' },
-                                                { value: 'feedback' as FeedbackType, emoji: '💬', label: 'General Feedback' },
+                                                { value: 'bug' as FeedbackType, icon: Bug, label: 'Bug Report', color: 'text-red-500' },
+                                                { value: 'feature' as FeedbackType, icon: Lightbulb, label: 'Feature Request', color: 'text-amber-400' },
+                                                { value: 'feedback' as FeedbackType, icon: MessageCircle, label: 'General Feedback', color: '' },
                                             ]).map(opt => (
                                                 <button
                                                     key={opt.value}
                                                     onClick={() => setType(opt.value)}
                                                     className={cn(
-                                                        "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center",
+                                                        "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center",
                                                         type === opt.value
                                                             ? "border-primary bg-primary/10 shadow-sm"
                                                             : "border-transparent dark:bg-white/[0.03] bg-black/[0.02] hover:border-primary/30"
                                                     )}
                                                 >
-                                                    <span className="text-2xl">{opt.emoji}</span>
-                                                    <span className="text-xs font-medium text-foreground">{opt.label}</span>
+                                                    <opt.icon className={cn("w-5 h-5", opt.color || (type === opt.value ? "text-primary" : "text-muted-foreground"))} />
+                                                    <span className="text-[11px] font-medium text-foreground">{opt.label}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -705,31 +701,7 @@ export const FeedbackModal = () => {
                                             />
                                         </div>
 
-                                        {/* Field 8 & 9: Checkboxes */}
-                                        <div className="space-y-2">
-                                            <label className="flex items-center gap-2.5 cursor-pointer group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={includeIdentity}
-                                                    onChange={() => setIncludeIdentity(!includeIdentity)}
-                                                    className="rounded border-border text-primary focus:ring-primary/30 w-4 h-4"
-                                                />
-                                                <span className="text-xs text-foreground group-hover:text-primary transition-colors">
-                                                    Include my display name and email so you can follow up with me
-                                                </span>
-                                            </label>
-                                            <label className="flex items-center gap-2.5 cursor-pointer group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={includeSystemInfo}
-                                                    onChange={() => setIncludeSystemInfo(!includeSystemInfo)}
-                                                    className="rounded border-border text-primary focus:ring-primary/30 w-4 h-4"
-                                                />
-                                                <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
-                                                    Include app info (browser, version, current page)
-                                                </span>
-                                            </label>
-                                        </div>
+
 
                                         {/* Submit Error */}
                                         {submitError && (

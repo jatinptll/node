@@ -3,6 +3,13 @@ import { Diamond, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { supabase } from '@/integrations/supabase/client';
+
+// Detect iOS Safari — popup-based OAuth is blocked on this browser
+const isIOSSafari = typeof navigator !== 'undefined' &&
+    /iP(hone|ad|od)/.test(navigator.userAgent) &&
+    /WebKit/.test(navigator.userAgent) &&
+    !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
 
 const LoginPage = () => {
     const { signInWithGoogle, isLoading, user } = useAuthStore();
@@ -11,7 +18,18 @@ const LoginPage = () => {
 
     const handleGoogleSignIn = async () => {
         try {
-            await signInWithGoogle();
+            if (isIOSSafari) {
+                // Use redirect flow for iOS Safari — popups are blocked
+                await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin,
+                        skipBrowserRedirect: false,
+                    },
+                });
+            } else {
+                await signInWithGoogle();
+            }
         } catch (err) {
             console.error('Sign in failed:', err);
         }

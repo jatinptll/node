@@ -91,6 +91,14 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                     isConnected: true,
                 });
             }
+
+            // Restore classroom email from profile if not in localStorage
+            if (!localStorage.getItem('node_classroom_email')) {
+                const profile = await db.fetchProfile(userId);
+                if (profile?.classroom_account_email) {
+                    localStorage.setItem('node_classroom_email', profile.classroom_account_email);
+                }
+            }
         } catch (err) {
             console.error('Failed to load classroom sync state:', err);
         }
@@ -114,6 +122,9 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
 
             // Delete the sync state from DB completely (unlinks without deleting Academic lists)
             await db.deleteClassroomSync(session.user.id).catch(console.error);
+
+            // Clear classroom connection info from profile
+            await db.updateClassroomConnection(session.user.id, null, null).catch(console.error);
         }
 
         set({
@@ -189,6 +200,12 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
             getUserProfile(providerToken).then((profile) => {
                 if (profile?.emailAddress) {
                     localStorage.setItem('node_classroom_email', profile.emailAddress);
+                    // Also persist to Supabase profiles table for cross-device access
+                    db.updateClassroomConnection(
+                        userId,
+                        profile.emailAddress,
+                        new Date().toISOString()
+                    ).catch(console.error);
                 }
             }).catch(console.error);
 

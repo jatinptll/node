@@ -46,6 +46,10 @@ interface UIState {
   feedbackModalType: 'bug' | 'feature' | 'feedback' | null;
   openFeedbackModal: (type?: 'bug' | 'feature' | 'feedback') => void;
   closeFeedbackModal: () => void;
+  // Settings Panel
+  settingsOpen: boolean;
+  openSettings: () => void;
+  closeSettings: () => void;
 }
 
 function loadHiddenLists(): string[] {
@@ -222,4 +226,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   feedbackModalType: null,
   openFeedbackModal: (type) => set({ feedbackModalOpen: true, feedbackModalType: type || null }),
   closeFeedbackModal: () => set({ feedbackModalOpen: false, feedbackModalType: null }),
+
+  // ── Settings Panel ──
+  settingsOpen: false,
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
 }));

@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { FocusOverlay } from "@/components/focus/FocusOverlay";
 import { MorningPlanModal } from "@/components/planning/MorningPlanModal";
 import { CheckInPanel } from "@/components/planning/CheckInPanel";
+import { SettingsPanel } from "@/components/settings/SettingsPanel";
 
 const AdminFeedbackPage = lazy(() => import("./pages/AdminFeedback"));
 
@@ -187,6 +188,7 @@ const AppContent = () => {
               <MorningPlanModal />
             )}
             {checkInOpen && <CheckInPanel onClose={closeCheckIn} />}
+            <SettingsPanel />
           </ProtectedRoute>
         }
       />

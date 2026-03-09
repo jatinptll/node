@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { MessageSquare } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
 export const FloatingFeedbackButton = () => {
@@ -21,7 +22,7 @@ export const FloatingFeedbackButton = () => {
             }}
             title="Send feedback"
         >
-            <span className="text-sm">✦</span>
+            <MessageSquare className="w-3.5 h-3.5" />
             <span className="font-mono tracking-wide">Feedback</span>
         </motion.button>
     );
