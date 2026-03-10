@@ -3,7 +3,7 @@
 **Node** is a premium, beautifully designed productivity application built for students and professionals. It features a stunning UI powered by dynamic live glassmorphism effects, intelligent analytics, and seamless **Google Classroom** synchronization to effortlessly import, track, and update your academic assignments.
 
 
-🌍 **Live Demo:** [node-phi-nine.vercel.app](https://trynode.vercel.app/)
+🌍 **Live Demo:** [https://trynode.vercel.app/](https://trynode.vercel.app/)
 
 
 ## ✨ Key Features
