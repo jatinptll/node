@@ -3,30 +3,24 @@ import { MessageSquare } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 
 export const FloatingFeedbackButton = () => {
-    const { openFeedbackModal, detailPanelTaskId } = useUIStore();
-
-    // Hide when task detail panel is open or mobile sidebar is visible
-    if (detailPanelTaskId) return null;
+    const { openFeedbackModal } = useUIStore();
 
     return (
         <motion.button
             onClick={() => openFeedbackModal()}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 0.75, y: 0 }}
+            exit={{ opacity: 0, y: 20, scale: 0.8 }}
             whileHover={{ opacity: 1, scale: 1.03, boxShadow: '0 0 20px rgba(124, 58, 237, 0.4)' }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 z-30 flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-xs font-semibold shadow-lg cursor-pointer"
+            className="z-30 w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-lg cursor-pointer"
             style={{
                 background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                width: '110px',
-                height: '36px',
-                justifyContent: 'center',
             }}
             title="Send feedback"
         >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span className="font-mono tracking-wide">Feedback</span>
+            <MessageSquare className="w-4 h-4" />
         </motion.button>
     );
 };

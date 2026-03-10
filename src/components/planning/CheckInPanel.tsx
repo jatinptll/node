@@ -222,7 +222,7 @@ export const CheckInPanel = ({ onClose }: CheckInPanelProps) => {
                 )}
             >
                 {/* Header / Tabs */}
-                <div className="relative z-20 flex items-center justify-between px-2 pt-2 pb-0 border-b border-[rgba(124,58,237,0.15)] bg-gradient-to-r from-[rgba(245,243,255,0.9)] to-[rgba(237,233,254,0.9)] dark:bg-none dark:border-[rgba(139,92,246,0.12)]">
+                <div className="relative z-20 flex items-center justify-between px-2 pt-2 pb-3 border-b border-[rgba(124,58,237,0.15)] bg-gradient-to-r from-[rgba(245,243,255,0.9)] to-[rgba(237,233,254,0.9)] dark:bg-none dark:border-[rgba(139,92,246,0.12)]">
                     <div className="flex items-center">
                         <div className="flex items-center gap-1.5 px-3 py-2">
                             <span className="text-[#6d28d9] dark:text-[#a78bfa] leading-none node-mind-star-spin">✦</span>

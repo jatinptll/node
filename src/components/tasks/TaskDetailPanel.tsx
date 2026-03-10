@@ -275,30 +275,86 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
           </div>
 
           {/* Subtasks */}
-          {task.subtasks.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                Subtasks ({task.subtasks.filter(s => s.isCompleted).length}/{task.subtasks.length})
-              </h3>
-              {task.subtasks.map(st => (
-                <div key={st.id} className="flex items-center gap-2 px-2 py-1.5">
-                  <div className={cn(
-                    "w-4 h-4 rounded border flex items-center justify-center",
-                    st.isCompleted ? "bg-primary border-primary" : "border-muted-foreground/40"
-                  )}>
+          <div className="space-y-2">
+            <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+              Subtasks
+              {task.subtasks.length > 0 && (
+                <span className="ml-2 text-muted-foreground/70">
+                  {task.subtasks.filter(s => s.isCompleted).length} of {task.subtasks.length} done
+                </span>
+              )}
+            </h3>
+
+            {/* Progress bar */}
+            {task.subtasks.length > 0 && (
+              <div className="h-1 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${(task.subtasks.filter(s => s.isCompleted).length / task.subtasks.length) * 100}%` }}
+                />
+              </div>
+            )}
+
+            {/* Subtask list — incomplete first, then completed */}
+            {[...task.subtasks]
+              .sort((a, b) => (a.isCompleted === b.isCompleted ? a.sortOrder - b.sortOrder : a.isCompleted ? 1 : -1))
+              .map(st => (
+                <div key={st.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-2 group transition-colors">
+                  <button
+                    onClick={() => {
+                      const updated = task.subtasks.map(s =>
+                        s.id === st.id ? { ...s, isCompleted: !s.isCompleted } : s
+                      );
+                      updateTask(task.id, { subtasks: updated });
+                    }}
+                    className={cn(
+                      "w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors",
+                      st.isCompleted ? "bg-primary border-primary" : "border-muted-foreground/40 hover:border-primary"
+                    )}
+                  >
                     {st.isCompleted && (
                       <svg width="8" height="8" viewBox="0 0 10 10">
                         <path d="M2 5 L4 7 L8 3" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
                     )}
-                  </div>
-                  <span className={cn("text-sm", st.isCompleted ? "line-through text-muted-foreground" : "text-foreground")}>
+                  </button>
+                  <span className={cn("text-sm flex-1 min-w-0 truncate", st.isCompleted ? "line-through text-muted-foreground" : "text-foreground")}>
                     {st.title}
                   </span>
+                  <button
+                    onClick={() => {
+                      const updated = task.subtasks.filter(s => s.id !== st.id);
+                      updateTask(task.id, { subtasks: updated });
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    title="Remove subtask"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               ))}
+
+            {/* Add subtask input */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Add a subtask..."
+                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none px-2 py-1.5 rounded-md border border-border/50 focus:border-primary/30 transition-colors font-mono"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                    const newSubtask = {
+                      id: `st${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                      title: e.currentTarget.value.trim(),
+                      isCompleted: false,
+                      sortOrder: task.subtasks.length,
+                    };
+                    updateTask(task.id, { subtasks: [...task.subtasks, newSubtask] });
+                    e.currentTarget.value = '';
+                  }
+                }}
+              />
             </div>
-          )}
+          </div>
 
           {/* Focus Session */}
           {!task.isCompleted && (

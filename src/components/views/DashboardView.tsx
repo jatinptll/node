@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { cn, getLocalDateString } from '@/lib/utils';
 import type { Task, Priority } from '@/types/task';
-import { QuickAdd } from '@/components/layout/QuickAdd';
 import { InsightsCards } from '@/components/insights/InsightsCards';
 
 /* ──────────────── Helpers ──────────────── */
@@ -440,9 +439,6 @@ export const DashboardView = () => {
                                     ? `${stats.pending} task${stats.pending !== 1 ? 's' : ''} waiting for you`
                                     : 'All caught up! 🎉'}
                         </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <QuickAdd variant="dashboard" />
                     </div>
                 </motion.div>
 

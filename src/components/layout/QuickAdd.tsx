@@ -17,7 +17,7 @@ const priorities: { id: Priority; label: string; color: string }[] = [
     { id: 'p4', label: 'Low', color: '#94A3B8' },
 ];
 
-export const QuickAdd = ({ variant = 'header' }: { variant?: 'header' | 'dashboard' }) => {
+export const QuickAdd = ({ variant = 'header' }: { variant?: 'header' | 'dashboard' | 'fab' }) => {
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
@@ -94,7 +94,18 @@ export const QuickAdd = ({ variant = 'header' }: { variant?: 'header' | 'dashboa
 
     return (
         <>
-            {variant === 'header' ? (
+            {variant === 'fab' ? (
+                <button
+                    onClick={() => setOpen(true)}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-lg cursor-pointer active:scale-95 transition-all opacity-75 hover:opacity-100"
+                    style={{
+                        background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                    }}
+                    title="Quick Add"
+                >
+                    <Plus className="w-4 h-4" />
+                </button>
+            ) : variant === 'header' ? (
                 <button
                     onClick={() => setOpen(true)}
                     className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"

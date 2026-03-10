@@ -9,6 +9,7 @@ import { AlertCircle, CalendarDays, Sparkles, Clock, ChevronDown } from 'lucide-
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { scoreTasks, getTimeBucket } from '@/lib/taskScoring';
+import { sortActiveTasks } from '@/lib/taskSorting';
 
 // ──────────────── Collapsible Section ────────────────
 
@@ -87,8 +88,8 @@ export const TodayView = () => {
 
     const allActive = tasks.filter(t => !t.isCompleted && !hiddenListIds.includes(t.listId));
 
-    const overdueTasks = allActive.filter(t => t.dueDate && t.dueDate < todayStr);
-    const todayTasks = allActive.filter(t => t.dueDate === todayStr);
+    const overdueTasks = useMemo(() => sortActiveTasks(allActive.filter(t => t.dueDate && t.dueDate < todayStr)), [allActive, todayStr]);
+    const todayTasks = useMemo(() => sortActiveTasks(allActive.filter(t => t.dueDate === todayStr)), [allActive, todayStr]);
 
     // Pinned tasks from the morning plan (exclude if already in overdue/today)
     const overdueTodayIds = new Set([...overdueTasks.map(t => t.id), ...todayTasks.map(t => t.id)]);
@@ -227,13 +228,7 @@ export const TodayView = () => {
                     <div className="space-y-0.5">
                         <AnimatePresence mode="popLayout">
                             {suggestedTasks.map(task => (
-                                <div key={task.id} className="relative">
-                                    <TaskItem task={task} />
-                                    {/* Why label overlay */}
-                                    <span className="absolute top-1/2 -translate-y-1/2 right-3 text-[9px] font-mono text-muted-foreground/50 hidden sm:inline pointer-events-none">
-                                        {task.reason}
-                                    </span>
-                                </div>
+                                <TaskItem key={task.id} task={task} />
                             ))}
                         </AnimatePresence>
                     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTaskStore } from '@/store/taskStore';
 import { useUIStore } from '@/store/uiStore';
@@ -8,18 +8,25 @@ import { formatEstimate } from '@/components/tasks/TimeEstimateSelector';
 import { ChevronDown, Target, Edit2, Trash2, CalendarDays } from 'lucide-react';
 import { GoalDialog } from '@/components/tasks/GoalDialog';
 import { Button } from '@/components/ui/button';
+import { sortActiveTasks, sortCompletedTasks, paginate, PAGE_SIZE } from '@/lib/taskSorting';
+import { PaginationBar } from '@/components/PaginationBar';
 
 export const GoalView = ({ goalId }: { goalId: string }) => {
     const { goals, tasks, deleteGoal } = useTaskStore();
     const { setSelectedListId } = useUIStore();
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [showCompleted, setShowCompleted] = useState(false);
+    const [activePage, setActivePage] = useState(0);
+    const [completedPage, setCompletedPage] = useState(0);
 
     const goal = goals.find(g => g.id === goalId);
     const goalTasks = tasks.filter(t => t.goalId === goalId);
 
-    const activeTasks = goalTasks.filter(t => !t.isCompleted);
-    const completedTasks = goalTasks.filter(t => t.isCompleted);
+    const activeTasks = useMemo(() => sortActiveTasks(goalTasks.filter(t => !t.isCompleted)), [goalTasks]);
+    const completedTasks = useMemo(() => sortCompletedTasks(goalTasks.filter(t => t.isCompleted)), [goalTasks]);
+
+    const paginatedActive = useMemo(() => paginate(activeTasks, activePage, PAGE_SIZE), [activeTasks, activePage]);
+    const paginatedCompleted = useMemo(() => paginate(completedTasks, completedPage, PAGE_SIZE), [completedTasks, completedPage]);
 
     const totalTasks = goalTasks.length;
     const completedCount = completedTasks.length;
@@ -95,11 +102,17 @@ export const GoalView = ({ goalId }: { goalId: string }) => {
 
             <div className="space-y-0.5">
                 <AnimatePresence mode="popLayout">
-                    {activeTasks.map(task => (
+                    {paginatedActive.map(task => (
                         <TaskItem key={task.id} task={task} />
                     ))}
                 </AnimatePresence>
             </div>
+            <PaginationBar
+                currentPage={activePage}
+                totalItems={activeTasks.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setActivePage}
+            />
 
             {activeTasks.length === 0 && completedTasks.length === 0 && (
                 <div className="text-center py-12">
@@ -129,9 +142,15 @@ export const GoalView = ({ goalId }: { goalId: string }) => {
                                 exit={{ height: 0, opacity: 0 }}
                                 className="space-y-0.5 overflow-hidden"
                             >
-                                {completedTasks.map(task => (
+                                {paginatedCompleted.map(task => (
                                     <TaskItem key={task.id} task={task} />
                                 ))}
+                                <PaginationBar
+                                    currentPage={completedPage}
+                                    totalItems={completedTasks.length}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={setCompletedPage}
+                                />
                             </motion.div>
                         )}
                     </AnimatePresence>
