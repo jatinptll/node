@@ -21,7 +21,8 @@ import { CheckInPanel } from "@/components/planning/CheckInPanel";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 
 const AdminFeedbackPage = lazy(() => import("./pages/AdminFeedback"));
-
+const PrivacyPage = lazy(() => import("./pages/Privacy"));
+const TermsPage = lazy(() => import("./pages/Terms"));
 const queryClient = new QueryClient();
 
 // Auth-aware route wrapper
@@ -200,6 +201,22 @@ const AppContent = () => {
               <AdminFeedbackPage />
             </Suspense>
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>}>
+            <PrivacyPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/terms"
+        element={
+          <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>}>
+            <TermsPage />
+          </Suspense>
         }
       />
       <Route path="*" element={<NotFound />} />
