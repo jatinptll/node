@@ -47,6 +47,7 @@ interface InsightsState {
     scorecard: ScorecardMetrics | null;
     dailyActivity28d: DailyActivity[];
     lastComputedAt: number | null;
+    lastCompletedCount: number;
     previousSnapshot: any | null;
     computeInsights: () => void;
 }
@@ -82,20 +83,26 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     scorecard: null,
     dailyActivity28d: [],
     lastComputedAt: null,
+    lastCompletedCount: 0,
     previousSnapshot: null,
 
     computeInsights: () => {
-        // Only compute once per session (or if 30+ min has passed)
-        const last = get().lastComputedAt;
-        if (last && Date.now() - last < 30 * 60 * 1000) return;
+        const { tasks } = useTaskStore.getState();
+        const completedCount = tasks.filter(t => t.isCompleted && t.completedAt).length;
 
-        const { tasks, lists, workspaces, goals, userId } = useTaskStore.getState();
+        // Only recompute if: never computed, 30+ min passed, OR completed count changed
+        const last = get().lastComputedAt;
+        const prevCount = get().lastCompletedCount;
+        const timeFresh = last && Date.now() - last < 30 * 60 * 1000;
+        if (timeFresh && completedCount === prevCount) return;
+
+        const { lists, workspaces, goals, userId } = useTaskStore.getState();
         const completed = tasks.filter(t => t.isCompleted && t.completedAt);
         const now = Date.now();
         const nowDate = new Date();
 
         if (completed.length < 3) {
-            set({ insights: [], scorecard: null, dailyActivity28d: [], lastComputedAt: Date.now() });
+            set({ insights: [], scorecard: null, dailyActivity28d: [], lastComputedAt: Date.now(), lastCompletedCount: completedCount });
             return;
         }
 
@@ -751,7 +758,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
             }
         } catch { /* empty array on error */ }
 
-        set({ insights, scorecard, dailyActivity28d, lastComputedAt: Date.now() });
+        set({ insights, scorecard, dailyActivity28d, lastComputedAt: Date.now(), lastCompletedCount: completedCount });
 
         // ── Save snapshot to Supabase (fire and forget) ──
         if (userId && scorecard) {

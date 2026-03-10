@@ -299,7 +299,7 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
             {[...task.subtasks]
               .sort((a, b) => (a.isCompleted === b.isCompleted ? a.sortOrder - b.sortOrder : a.isCompleted ? 1 : -1))
               .map(st => (
-                <div key={st.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-2 group transition-colors">
+                <div key={st.id} className="flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-surface-2 group transition-colors">
                   <button
                     onClick={() => {
                       const updated = task.subtasks.map(s =>
@@ -308,7 +308,7 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
                       updateTask(task.id, { subtasks: updated });
                     }}
                     className={cn(
-                      "w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors",
+                      "w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors mt-0.5",
                       st.isCompleted ? "bg-primary border-primary" : "border-muted-foreground/40 hover:border-primary"
                     )}
                   >
@@ -318,7 +318,7 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
                       </svg>
                     )}
                   </button>
-                  <span className={cn("text-sm flex-1 min-w-0 truncate", st.isCompleted ? "line-through text-muted-foreground" : "text-foreground")}>
+                  <span className={cn("text-sm flex-1 min-w-0 break-words", st.isCompleted ? "line-through text-muted-foreground" : "text-foreground")}>
                     {st.title}
                   </span>
                   <button
@@ -326,7 +326,7 @@ export const TaskDetailPanel = ({ taskId }: { taskId: string }) => {
                       const updated = task.subtasks.filter(s => s.id !== st.id);
                       updateTask(task.id, { subtasks: updated });
                     }}
-                    className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
                     title="Remove subtask"
                   >
                     <X className="w-3 h-3" />

@@ -24,7 +24,6 @@ html {
 @media (max-width: 768px) {
 
   /* On mobile: keep critical transitions (0.15s) but kill heavy ambient animations */
-  .node-mind-star-spin,
   .node-mind-avatar-pulse,
   .initial-loader-logo {
     animation: none !important;
