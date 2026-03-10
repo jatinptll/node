@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import {
     ChevronLeft, ChevronRight, X, ExternalLink,
-    Paperclip, LogOut, Menu, Filter
+    Paperclip, LogOut, Menu, Filter, Sun, Moon, Monitor,
+    Bug, Lightbulb, MessageCircle, ShieldX, type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import { useAuthStore } from '@/store/authStore';
 
 type FeedbackStatus = 'new' | 'reviewing' | 'planned' | 'in_progress' | 'done' | 'wont_fix' | 'duplicate';
 type FeedbackPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -56,7 +59,11 @@ const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
     high: { label: 'High', color: '#ef4444' },
 };
 
-const TYPE_ICONS: Record<string, string> = { bug: '🐛', feature: '💡', feedback: '💬' };
+const TYPE_ICON_COMPONENTS: Record<string, { icon: LucideIcon; color: string }> = {
+    bug: { icon: Bug, color: '#ef4444' },
+    feature: { icon: Lightbulb, color: '#f59e0b' },
+    feedback: { icon: MessageCircle, color: '#7c3aed' },
+};
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest first' },
@@ -81,120 +88,88 @@ function timeAgo(dateStr: string): string {
     return `${days}d ago`;
 }
 
-const ADMIN_USERNAME = import.meta.env.VITE_ADMIN_USERNAME;
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
-const SESSION_KEY = 'node_admin_authenticated';
+const ADMIN_EMAILS = [
+    (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase(),
+].filter(Boolean);
 
 const AdminLoginGate = ({ children }: { children: React.ReactNode }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [authenticated, setAuthenticated] = useState(() => {
-        return sessionStorage.getItem(SESSION_KEY) === 'true';
-    });
+    const { user } = useAuthStore();
+    const userEmail = user?.email?.toLowerCase() || '';
+    const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-            sessionStorage.setItem(SESSION_KEY, 'true');
-            setAuthenticated(true);
-            setError('');
-        } else {
-            setError('Invalid username or password');
-            setPassword('');
-        }
-    };
-
-    if (authenticated) {
-        return <>{children}</>;
-    }
-
-    return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            {/* Subtle background glow */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px]" />
-            </div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className={cn(
-                    "relative w-full max-w-[380px] rounded-2xl border p-8 shadow-2xl",
-                    "dark:bg-[radial-gradient(ellipse_at_top,rgba(30,20,50,0.97),rgba(10,5,20,0.98))] dark:border-[rgba(139,92,246,0.2)]",
-                    "bg-[radial-gradient(ellipse_70%_50%_at_50%_30%,rgba(167,139,250,0.08),transparent_70%),linear-gradient(145deg,#faf5ff,#f3e8ff_40%,#ede9fe)] border-[rgba(124,58,237,0.18)]",
-                    "dark:shadow-[0_0_40px_rgba(124,58,237,0.12)]",
-                    "shadow-[0_8px_40px_rgba(109,40,217,0.1),0_2px_8px_rgba(109,40,217,0.06)]"
-                )}
-            >
-                <div className="text-center mb-8">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] flex items-center justify-center mx-auto mb-4 shadow-lg">
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center p-4">
+                <div className="text-center space-y-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] flex items-center justify-center mx-auto shadow-lg">
                         <span className="text-white text-lg font-bold">N</span>
                     </div>
-                    <h1 className="text-xl font-semibold text-foreground">Admin Access</h1>
-                    <p className="text-sm text-muted-foreground mt-1">Node Feedback Dashboard</p>
+                    <p className="text-sm text-muted-foreground font-mono">Loading session...</p>
                 </div>
+            </div>
+        );
+    }
 
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-1.5">
-                        <label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Username</label>
-                        <input
-                            type="password"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            autoFocus
-                            autoComplete="off"
-                            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all font-mono"
-                            placeholder="Enter username"
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="current-password"
-                            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all font-mono"
-                            placeholder="Enter password"
-                        />
-                    </div>
-
-                    {error && (
-                        <motion.p
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-xs text-red-500 font-mono text-center"
-                        >
-                            {error}
-                        </motion.p>
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center p-4">
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px]" />
+                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className={cn(
+                        "relative w-full max-w-[400px] rounded-2xl border p-8 shadow-2xl text-center",
+                        "dark:bg-[radial-gradient(ellipse_at_top,rgba(30,20,50,0.97),rgba(10,5,20,0.98))] dark:border-[rgba(139,92,246,0.2)]",
+                        "bg-[radial-gradient(ellipse_70%_50%_at_50%_30%,rgba(167,139,250,0.08),transparent_70%),linear-gradient(145deg,#faf5ff,#f3e8ff_40%,#ede9fe)] border-[rgba(124,58,237,0.18)]",
+                        "dark:shadow-[0_0_40px_rgba(124,58,237,0.12)]",
+                        "shadow-[0_8px_40px_rgba(109,40,217,0.1),0_2px_8px_rgba(109,40,217,0.06)]"
                     )}
-
-                    <button
-                        type="submit"
-                        disabled={!username.trim() || !password.trim()}
+                >
+                    <div className="w-14 h-14 rounded-xl bg-destructive/10 flex items-center justify-center mx-auto mb-5">
+                        <ShieldX className="w-7 h-7 text-destructive" />
+                    </div>
+                    <h1 className="text-xl font-semibold text-foreground mb-1">Access Denied</h1>
+                    <p className="text-sm text-muted-foreground mb-1">You don't have admin privileges.</p>
+                    <p className="text-xs text-muted-foreground/60 font-mono mb-6">
+                        Signed in as {userEmail}
+                    </p>
+                    <a
+                        href="/"
                         className={cn(
-                            "w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2",
-                            username.trim() && password.trim()
-                                ? "bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white hover:shadow-[0_6px_24px_rgba(124,58,237,0.4)] hover:brightness-110 active:scale-[0.98]"
-                                : "bg-muted text-muted-foreground cursor-not-allowed"
+                            "inline-flex px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                            "bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white hover:shadow-[0_6px_24px_rgba(124,58,237,0.4)] hover:brightness-110 active:scale-[0.98]"
                         )}
                     >
-                        Sign In
-                    </button>
-                </form>
-            </motion.div>
-        </div>
-    );
+                        Go to Dashboard
+                    </a>
+                </motion.div>
+            </div>
+        );
+    }
+
+    return <>{children}</>;
 };
 
 const AdminFeedbackDashboard = () => {
     const [items, setItems] = useState<FeedbackItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [viewedIds, setViewedIds] = useState<Set<string>>(new Set());
+
+    // Theme
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+
+    const toggleTheme = () => {
+        if (theme === 'light') setTheme('dark');
+        else if (theme === 'dark') setTheme('system');
+        else setTheme('light');
+    };
+    const ThemeIcon = mounted ? (theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor) : Monitor;
+    const themeLabel = mounted ? (theme === 'system' ? 'System' : theme === 'light' ? 'Light' : 'Dark') : 'Theme';
 
     // Filters
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -227,12 +202,6 @@ const AdminFeedbackDashboard = () => {
 
     useEffect(() => { fetchFeedback(); }, [fetchFeedback]);
 
-    // Mark item as viewed when selected
-    useEffect(() => {
-        if (selectedId) {
-            setViewedIds(prev => new Set(prev).add(selectedId));
-        }
-    }, [selectedId]);
 
     // Filtered + sorted items
     const filteredItems = useMemo(() => {
@@ -347,8 +316,7 @@ const AdminFeedbackDashboard = () => {
     };
 
     const handleLogout = () => {
-        sessionStorage.removeItem(SESSION_KEY);
-        window.location.reload();
+        window.location.href = '/';
     };
 
     // Filter sidebar content (shared for desktop sidebar and mobile drawer)
@@ -386,19 +354,23 @@ const AdminFeedbackDashboard = () => {
             <div>
                 <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">Type</p>
                 <div className="space-y-0.5">
-                    {(['bug', 'feature', 'feedback'] as FeedbackType[]).map(t => (
-                        <button
-                            key={t}
-                            onClick={() => toggleFilter(typeFilter, t, setTypeFilter)}
-                            className={cn(
-                                "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-mono transition-colors",
-                                typeFilter.has(t) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-surface-2"
-                            )}
-                        >
-                            <span>{TYPE_ICONS[t]}</span>
-                            <span className="capitalize">{t === 'bug' ? 'Bugs' : t === 'feature' ? 'Features' : 'Feedback'}</span>
-                        </button>
-                    ))}
+                    {(['bug', 'feature', 'feedback'] as FeedbackType[]).map(t => {
+                        const conf = TYPE_ICON_COMPONENTS[t];
+                        const Icon = conf.icon;
+                        return (
+                            <button
+                                key={t}
+                                onClick={() => toggleFilter(typeFilter, t, setTypeFilter)}
+                                className={cn(
+                                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-mono transition-colors",
+                                    typeFilter.has(t) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-surface-2"
+                                )}
+                            >
+                                <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: conf.color }} />
+                                <span className="capitalize">{t === 'bug' ? 'Bugs' : t === 'feature' ? 'Features' : 'Feedback'}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -415,7 +387,7 @@ const AdminFeedbackDashboard = () => {
                                 severityFilter.has(s) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-surface-2"
                             )}
                         >
-                            <span>{SEVERITY_CONFIG[s]?.label ? (['🔴', '🟡', '🟢'][['high', 'medium', 'low'].indexOf(s)]) : ''}</span>
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: SEVERITY_CONFIG[s]?.color }} />
                             <span className="capitalize">{s}</span>
                         </button>
                     ))}
@@ -517,6 +489,22 @@ const AdminFeedbackDashboard = () => {
                     )}
                 </div>
 
+                {/* Theme Toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors flex-shrink-0"
+                    title={`Theme: ${themeLabel}`}
+                >
+                    <motion.div
+                        key={theme}
+                        initial={{ y: -14, opacity: 0, rotate: -90 }}
+                        animate={{ y: 0, opacity: 1, rotate: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                    >
+                        <ThemeIcon className="w-3.5 h-3.5" />
+                    </motion.div>
+                </button>
+
                 <button
                     onClick={handleLogout}
                     className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors flex-shrink-0"
@@ -578,75 +566,93 @@ const AdminFeedbackDashboard = () => {
                         <div className="divide-y divide-border">
                             {filteredItems.map(item => {
                                 const isSelected = selectedId === item.id;
-                                const isNew = item.status === 'new' && !viewedIds.has(item.id);
                                 const statusConf = STATUS_CONFIG[item.status];
                                 const severityConf = item.severity ? SEVERITY_CONFIG[item.severity] : null;
+
+                                const typeConf = TYPE_ICON_COMPONENTS[item.type];
+                                const TypeIcon = typeConf.icon;
 
                                 return (
                                     <button
                                         key={item.id}
                                         onClick={() => setSelectedId(item.id)}
                                         className={cn(
-                                            "w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 text-left hover:bg-surface-2 transition-colors relative",
+                                            "w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 text-left hover:bg-surface-2 transition-colors relative",
                                             isSelected && "bg-primary/5 border-l-2 border-l-primary"
                                         )}
                                     >
-                                        {/* New dot */}
-                                        {isNew && (
-                                            <div className="absolute left-1 sm:left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500" />
+                                        {/* Blue dot for new items */}
+                                        {item.status === 'new' && (
+                                            <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                                         )}
 
-                                        {/* Type */}
-                                        <span className="text-sm flex-shrink-0">{TYPE_ICONS[item.type]}</span>
+                                        {/* Type icon */}
+                                        <div className="flex-shrink-0">
+                                            <TypeIcon className="w-4 h-4" style={{ color: typeConf.color }} />
+                                        </div>
 
                                         {/* Title + areas */}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                                <span className="text-sm font-medium text-foreground truncate max-w-[150px] sm:max-w-[250px]">
-                                                    {item.title.length > 60 ? `${item.title.slice(0, 60)}...` : item.title}
-                                                </span>
-                                                {/* Hide area tags on small screens */}
-                                                {item.areas && item.areas.slice(0, 2).map(a => (
-                                                    <span key={a} className="hidden sm:inline-flex text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-surface-2 text-muted-foreground flex-shrink-0">
-                                                        {a}
-                                                    </span>
-                                                ))}
-                                                {item.areas && item.areas.length > 2 && (
-                                                    <span className="hidden sm:inline text-[9px] text-muted-foreground/60">+{item.areas.length - 2}</span>
-                                                )}
-                                            </div>
+                                            <span className="text-sm font-medium text-foreground truncate block">
+                                                {item.title.length > 60 ? `${item.title.slice(0, 60)}...` : item.title}
+                                            </span>
+                                            {/* Area tags on a separate line below title */}
+                                            {item.areas && item.areas.length > 0 && (
+                                                <div className="hidden sm:flex items-center gap-1 mt-1">
+                                                    {item.areas.slice(0, 3).map(a => (
+                                                        <span
+                                                            key={a}
+                                                            className="inline-flex text-[9px] font-mono leading-none px-1.5 py-[3px] rounded-md bg-surface-2 text-muted-foreground border border-border/50"
+                                                        >
+                                                            {a}
+                                                        </span>
+                                                    ))}
+                                                    {item.areas.length > 3 && (
+                                                        <span className="text-[9px] text-muted-foreground/50 font-mono">+{item.areas.length - 3}</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
-                                        {/* Severity — hidden on mobile */}
-                                        {severityConf && (
-                                            <span
-                                                className="hidden sm:inline-flex text-[9px] font-mono font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                                style={{ backgroundColor: `${severityConf.color}20`, color: severityConf.color }}
-                                            >
-                                                {severityConf.label}
+                                        {/* Right-aligned badges group — fixed width columns for consistent alignment */}
+                                        <div className="flex items-center flex-shrink-0">
+                                            {/* Severity — fixed slot */}
+                                            <div className="hidden sm:flex w-[55px] justify-end mr-1.5">
+                                                {severityConf && (
+                                                    <span
+                                                        className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                                        style={{ backgroundColor: `${severityConf.color}20`, color: severityConf.color }}
+                                                    >
+                                                        {severityConf.label}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Status — fixed slot (hidden for 'new' since blue dot shows it) */}
+                                            <div className="w-[60px] flex justify-end mr-1.5">
+                                                {item.status !== 'new' && (
+                                                    <span
+                                                        className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                                        style={{ backgroundColor: statusConf.bg, color: statusConf.color }}
+                                                    >
+                                                        {statusConf.label}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Submitter — hidden on mobile */}
+                                            <span className="hidden md:inline text-[10px] text-muted-foreground/60 w-[70px] truncate text-right mr-1.5">
+                                                {item.is_anonymous ? 'Anon' : (item.submitter_name || 'User')}
                                             </span>
-                                        )}
 
-                                        {/* Status */}
-                                        <span
-                                            className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                            style={{ backgroundColor: statusConf.bg, color: statusConf.color }}
-                                        >
-                                            {statusConf.label}
-                                        </span>
+                                            {/* Time */}
+                                            <span className="text-[10px] text-muted-foreground/50 w-[50px] text-right">
+                                                {timeAgo(item.created_at)}
+                                            </span>
 
-                                        {/* Submitter — hidden on mobile */}
-                                        <span className="hidden md:inline text-[10px] text-muted-foreground/60 w-[80px] truncate text-right flex-shrink-0">
-                                            {item.is_anonymous ? 'Anonymous' : (item.submitter_name || 'User')}
-                                        </span>
-
-                                        {/* Time */}
-                                        <span className="text-[10px] text-muted-foreground/50 w-[45px] sm:w-[60px] text-right flex-shrink-0">
-                                            {timeAgo(item.created_at)}
-                                        </span>
-
-                                        {/* Attachment indicator */}
-                                        {item.attachment_url && <Paperclip className="w-3 h-3 text-muted-foreground/40 flex-shrink-0 hidden sm:block" />}
+                                            {/* Attachment indicator */}
+                                            {item.attachment_url && <Paperclip className="w-3 h-3 text-muted-foreground/40 hidden sm:block ml-1.5" />}
+                                        </div>
                                     </button>
                                 );
                             })}
@@ -698,9 +704,16 @@ const AdminFeedbackDashboard = () => {
                                 <div className="space-y-2">
                                     <h3 className="text-lg font-semibold text-foreground leading-tight">{selectedItem.title}</h3>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-2">
-                                            {TYPE_ICONS[selectedItem.type]} {selectedItem.type}
-                                        </span>
+                                        {(() => {
+                                            const conf = TYPE_ICON_COMPONENTS[selectedItem.type];
+                                            const Icon = conf.icon;
+                                            return (
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded-full bg-surface-2">
+                                                    <Icon className="w-3 h-3" style={{ color: conf.color }} />
+                                                    {selectedItem.type}
+                                                </span>
+                                            );
+                                        })()}
                                         {selectedItem.severity && (
                                             <span
                                                 className="text-xs font-mono px-2 py-0.5 rounded-full"
