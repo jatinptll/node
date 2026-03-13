@@ -102,7 +102,7 @@ const Privacy = () => {
 
                     <Section id="who" title="Who We Are">
                         <p>
-                            Node is an independent productivity tool operated by Jatin Patel. For any privacy-related enquiries, please use the in-app feedback feature. The application is accessible at <a href="https://node-phi-nine.vercel.app" className="text-primary underline underline-offset-2">node-phi-nine.vercel.app</a>.
+                            Node is an independent productivity tool operated by Jatin Patel. For any privacy-related enquiries, please use the in-app feedback feature. The application is accessible at <a href="https://trynode.in" className="text-primary underline underline-offset-2">trynode.in</a>.
                         </p>
                     </Section>
 

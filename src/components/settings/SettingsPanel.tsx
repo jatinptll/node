@@ -378,7 +378,7 @@ const DangerDeleteAccount = () => {
         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-3">
             <p className="text-sm text-foreground leading-relaxed">
                 Account deletion requires contacting support. Email{' '}
-                <span className="font-mono text-primary break-all">support@usenode.app</span>{' '}
+                <span className="font-mono text-primary break-all">support@trynode.in</span>{' '}
                 with the subject "Account Deletion Request".
             </p>
             <button
