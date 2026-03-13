@@ -374,6 +374,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         ...t,
         isCompleted: !t.isCompleted,
         completedAt: !t.isCompleted ? new Date().toISOString() : undefined,
+        nodeCompletedAt: !t.isCompleted ? new Date().toISOString() : undefined,
         status: !t.isCompleted ? 'done' as TaskStatus : 'todo' as TaskStatus,
       } : t),
     }));
@@ -462,6 +463,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           status,
           isCompleted,
           completedAt: isCompleted ? (t.completedAt || new Date().toISOString()) : undefined,
+          nodeCompletedAt: isCompleted ? (t.nodeCompletedAt || new Date().toISOString()) : undefined,
         };
       }),
     }));

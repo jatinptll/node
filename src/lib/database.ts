@@ -163,6 +163,7 @@ export async function fetchUserTasks(userId: string): Promise<Task[]> {
         actualDurationMinutes: row.actual_duration_minutes,
         focusSessionsCount: row.focus_sessions_count,
         createdAt: row.created_at,
+        nodeCompletedAt: row.node_completed_at,
     }));
 }
 
@@ -205,6 +206,7 @@ export async function fetchOlderCompletedTasks(userId: string): Promise<Task[]> 
         goalId: row.goal_id,
         classroomCourseworkId: row.classroom_coursework_id,
         createdAt: row.created_at,
+        nodeCompletedAt: row.node_completed_at,
     }));
 }
 
@@ -238,7 +240,20 @@ export async function upsertTask(userId: string, task: Task): Promise<void> {
             actual_duration_minutes: task.actualDurationMinutes || null,
             focus_sessions_count: task.focusSessionsCount || 0,
             created_at: task.createdAt,
+            node_completed_at: task.nodeCompletedAt || null,
         }, { onConflict: 'id,user_id' });
+
+    if (error) throw error;
+}
+
+export async function detachIncompleteClassroomTasks(userId: string): Promise<void> {
+    const { error } = await db
+        .from('tasks')
+        .update({
+            classroom_coursework_id: null
+        })
+        .eq('user_id', userId)
+        .eq('is_completed', false);
 
     if (error) throw error;
 }

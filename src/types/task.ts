@@ -52,6 +52,7 @@ export interface Task {
   actualDurationMinutes?: number;
   focusSessionsCount?: number;
   createdAt: string;
+  nodeCompletedAt?: string;
 }
 
 export interface Section {

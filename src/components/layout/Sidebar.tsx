@@ -96,7 +96,7 @@ export const Sidebar = () => {
         }}
         transition={{ duration: 0.2, ease: 'easeInOut' }}
         className={cn(
-          "h-screen flex flex-col border-r border-border bg-sidebar overflow-hidden flex-shrink-0",
+          "sidebar h-[100dvh] flex flex-col border-r border-border bg-sidebar overflow-hidden flex-shrink-0",
           isMobile ? "fixed left-0 top-0 bottom-0 z-50 shadow-elevation-2" : "relative"
         )}
       >
@@ -378,7 +378,7 @@ export const Sidebar = () => {
         </div>
 
         {/* Edit Workspaces Instead of Sync */}
-        <div className="p-4 border-t border-border bg-sidebar mt-auto">
+        <div className="edit-workspaces-container p-4 border-t border-border bg-sidebar mt-auto">
           {!sidebarCollapsed && (
             <button
               onClick={() => setEditWorkspacesOpen(true)}

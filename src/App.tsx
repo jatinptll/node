@@ -95,7 +95,24 @@ const AppContent = () => {
   // Clean the URL hash safely ONLY after Supabase has been cleanly initialized
   // to avoid exposing the access_token in the browser address bar.
   useEffect(() => {
+    const handleClassroomRedirect = async () => {
+      const intent = sessionStorage.getItem('classroom_connect_intent');
+      if (intent === 'true' && location.hash.includes('access_token=')) {
+        sessionStorage.removeItem('classroom_connect_intent');
+        const tokenMatch = location.hash.match(/access_token=([^&]+)/);
+        const expiresInMatch = location.hash.match(/expires_in=([^&]+)/);
+        if (tokenMatch && tokenMatch[1]) {
+          useClassroomStore.getState().setProviderToken(
+            tokenMatch[1],
+            expiresInMatch ? parseInt(expiresInMatch[1]) : 3600
+          );
+          useClassroomStore.getState().syncNow().catch(console.error);
+        }
+      }
+    };
+
     if (isInitialized && location.hash.includes("access_token=")) {
+      handleClassroomRedirect();
       // Clear the hash from react-router's state
       navigate({
         pathname: location.pathname,

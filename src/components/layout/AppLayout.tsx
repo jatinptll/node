@@ -1,4 +1,5 @@
 import { Sidebar } from './Sidebar';
+import { useEffect } from 'react';
 import { Header } from './Header';
 import { CommandPalette } from './CommandPalette';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -12,18 +13,60 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   useKeyboardShortcuts();
-  const { detailPanelTaskId, sidebarCollapsed } = useUIStore();
+  const { detailPanelTaskId, sidebarCollapsed, settingsOpen, checkInOpen, feedbackModalOpen, commandPaletteOpen } = useUIStore();
   const isMobile = useIsMobile();
   const showFloatingButtons = !isMobile || sidebarCollapsed;
   const isDetailOpen = !!detailPanelTaskId;
 
+  useEffect(() => {
+    const isIOSSafari = /iP(hone|ad|od)/.test(navigator.userAgent) &&
+                        /WebKit/.test(navigator.userAgent) &&
+                        !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
+
+    if (!isIOSSafari) return;
+
+    const customModalOpen = settingsOpen || checkInOpen || feedbackModalOpen || commandPaletteOpen || (isMobile && isDetailOpen) || (isMobile && !sidebarCollapsed);
+
+    // Apply or remove fixed position to body
+    const applyScrollLock = (locked: boolean) => {
+      if (locked) {
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+      } else {
+        document.body.style.position = '';
+        document.body.style.width = '';
+      }
+    };
+
+    if (customModalOpen || document.body.hasAttribute('data-scroll-locked')) {
+      applyScrollLock(true);
+    } else {
+      applyScrollLock(false);
+    }
+
+    const observer = new MutationObserver(() => {
+      if (document.body.hasAttribute('data-scroll-locked')) {
+        applyScrollLock(true);
+      } else if (!customModalOpen) {
+        applyScrollLock(false);
+      }
+    });
+
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-scroll-locked'] });
+
+    return () => {
+      observer.disconnect();
+      applyScrollLock(false);
+    };
+  }, [settingsOpen, checkInOpen, feedbackModalOpen, commandPaletteOpen, isDetailOpen, isMobile, sidebarCollapsed]);
+
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="app-root flex h-[100dvh] w-full overflow-hidden bg-background">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <Header />
         <div className="flex flex-1 overflow-hidden">
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <main className="main-content flex-1 overflow-y-auto">{children}</main>
           {detailPanelTaskId && <TaskDetailPanel taskId={detailPanelTaskId} />}
         </div>
       </div>

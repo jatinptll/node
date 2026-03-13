@@ -4,6 +4,11 @@ import { useTaskStore } from '@/store/taskStore';
 import { Search, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
+const isIOSSafari = typeof window !== 'undefined' ? 
+  /iP(hone|ad|od)/.test(navigator.userAgent) &&
+  /WebKit/.test(navigator.userAgent) &&
+  !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent) : false;
+
 export const CommandPalette = () => {
   const { commandPaletteOpen, toggleCommandPalette, setSelectedListId, openDetailPanel } = useUIStore();
   const { tasks, lists } = useTaskStore();
@@ -13,7 +18,9 @@ export const CommandPalette = () => {
   useEffect(() => {
     if (commandPaletteOpen) {
       setQuery('');
-      setTimeout(() => inputRef.current?.focus(), 100);
+      if (!isIOSSafari) {
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
     }
   }, [commandPaletteOpen]);
 
@@ -45,6 +52,9 @@ export const CommandPalette = () => {
             transition={{ duration: 0.15 }}
             className="w-[calc(100vw-2rem)] sm:w-full max-w-lg bg-card border border-border rounded-xl shadow-elevation-2 overflow-hidden"
             onClick={e => e.stopPropagation()}
+            onAnimationComplete={() => {
+              if (isIOSSafari) inputRef.current?.focus();
+            }}
           >
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
               <Search className="w-4 h-4 text-muted-foreground" />
@@ -54,6 +64,7 @@ export const CommandPalette = () => {
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search tasks, lists..."
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none font-mono"
+                autoFocus
               />
               <button onClick={toggleCommandPalette} className="text-muted-foreground hover:text-foreground">
                 <X className="w-4 h-4" />

@@ -9,6 +9,43 @@ html {
   touch-action: manipulation;
 }
 
+/* iOS Safari Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Prevent auto-zoom on inputs */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  /* Bug 2: Root app container must not have overflow: hidden to allow child scroll regions */
+  .app-root {
+    overflow: visible;
+  }
+
+  /* Bug 2: Main content area height and scrolling */
+  .main-content {
+    height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Bug 2: Sidebar fixed height and scrolling */
+  .sidebar {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: 100dvh;
+    position: fixed;
+    left: 0;
+    top: 0;
+  }
+
+  /* Bug 3: Safe area inset for edit workspaces button */
+  .edit-workspaces-container {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    position: sticky;
+    bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Reduce heavy decorative animations on mobile / prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
 

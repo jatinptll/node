@@ -49,6 +49,7 @@ interface ClassroomState {
     syncNow: () => Promise<{ newTasks: number; updatedCourses: number; removedCourses: number }>;
     disconnectClassroom: () => Promise<void>;
     clearState: () => void;
+    setProviderToken: (token: string, expiresIn: number) => void;
 }
 
 
@@ -115,6 +116,11 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
         });
     },
 
+    setProviderToken: (token: string, expiresIn: number) => {
+        globalGoogleToken = token;
+        tokenExpiresAt = Date.now() + (expiresIn - 300) * 1000;
+    },
+
     disconnectClassroom: async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -125,6 +131,9 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
 
             // Clear classroom connection info from profile
             await db.updateClassroomConnection(session.user.id, null, null).catch(console.error);
+            
+            // Detach incomplete classroom tasks from Classroom (preserves completion state and heatmap metrics)
+            await db.detachIncompleteClassroomTasks(session.user.id).catch(console.error);
         }
 
         set({
@@ -147,6 +156,28 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
         const getAccessToken = () => new Promise<string>((resolve, reject) => {
             if (globalGoogleToken && Date.now() < tokenExpiresAt) {
                 resolve(globalGoogleToken);
+                return;
+            }
+
+            // Fix for Safari popup blocker triggering on "Sync" and "Connect" buttons
+            const isSafari = /Safari/i.test(navigator.userAgent) && 
+                             !/Chrome/i.test(navigator.userAgent) && 
+                             !/CriOS/i.test(navigator.userAgent) && 
+                             !/FxiOS/i.test(navigator.userAgent) && 
+                             !/EdgiOS/i.test(navigator.userAgent);
+
+            if (isSafari) {
+                sessionStorage.setItem('classroom_connect_intent', 'true');
+                const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                const redirectUri = window.location.origin;
+                const scope = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly https://www.googleapis.com/auth/classroom.student-submissions.me.readonly';
+                
+                const storedEmail = localStorage.getItem('node_classroom_email');
+                const loginHint = storedEmail ? `&login_hint=${encodeURIComponent(storedEmail)}` : '&prompt=select_account';
+                
+                const googleClassroomOAuthURL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}${loginHint}`;
+                window.location.href = googleClassroomOAuthURL;
+                // Leave pending indefinitely as the browser navigates away
                 return;
             }
 
@@ -227,21 +258,31 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
             const staleCourseIds = new Set(staleCourses.map(sc => sc.id));
 
             if (staleListIds.size > 0) {
-                // Get fresh state and batch-remove all stale tasks
+                // Get fresh state and batch-remove all stale tasks that are NOT completed
                 const currentTasks = useTaskStore.getState().tasks;
+                
+                // Only delete incomplete tasks!
                 const staleTaskIds = currentTasks
-                    .filter(t => staleListIds.has(t.listId))
+                    .filter(t => staleListIds.has(t.listId) && !t.isCompleted)
                     .map(t => t.id);
 
-                // Delete all stale tasks from DB
+                // Delete stale incomplete tasks from DB
                 for (const taskId of staleTaskIds) {
                     db.deleteTaskFromDB(userId, taskId).catch(err =>
                         console.error(`Failed to delete stale task ${taskId}:`, err)
                     );
                 }
 
-                // Delete all stale lists from DB
+                // Delete stale lists entirely ONLY if all of their tasks were successfully cleared
+                const emptyListIds = new Set<string>();
                 for (const listId of staleListIds) {
+                    const remainingCompletedTasks = currentTasks.filter(t => t.listId === listId && t.isCompleted);
+                    if (remainingCompletedTasks.length === 0) {
+                        emptyListIds.add(listId);
+                    }
+                }
+
+                for (const listId of emptyListIds) {
                     db.deleteList(userId, listId).catch(err =>
                         console.error(`Failed to delete stale list ${listId}:`, err)
                     );
@@ -250,8 +291,8 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                 // Batch-update the store state in one go
                 const freshState = useTaskStore.getState();
                 useTaskStore.setState({
-                    tasks: freshState.tasks.filter(t => !staleListIds.has(t.listId)),
-                    lists: freshState.lists.filter(l => !staleListIds.has(l.id)),
+                    tasks: freshState.tasks.filter(t => !staleTaskIds.includes(t.id)),
+                    lists: freshState.lists.filter(l => !emptyListIds.has(l.id)),
                 });
 
                 // Clean up imported coursework IDs for removed courses
@@ -290,23 +331,30 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                 const orphanedListIds = new Set(orphanedLists.map(l => l.id));
 
                 const currentTasksNow = useTaskStore.getState().tasks;
-                for (const task of currentTasksNow) {
-                    if (orphanedListIds.has(task.listId)) {
-                        db.deleteTaskFromDB(userId, task.id).catch(err =>
-                            console.error(`Failed to delete orphaned task ${task.id}:`, err)
+                // Only delete incomplete tasks from orphaned courses!
+                const orphanedTaskIds = currentTasksNow.filter(t => orphanedListIds.has(t.listId) && !t.isCompleted).map(t => t.id);
+
+                for (const taskId of orphanedTaskIds) {
+                    db.deleteTaskFromDB(userId, taskId).catch(err =>
+                        console.error(`Failed to delete orphaned task ${taskId}:`, err)
+                    );
+                }
+
+                const emptyOrphanedListIds = new Set<string>();
+                for (const list of orphanedLists) {
+                    const remainingTasks = currentTasksNow.filter(t => t.listId === list.id && t.isCompleted);
+                    if (remainingTasks.length === 0) {
+                        emptyOrphanedListIds.add(list.id);
+                        db.deleteList(userId, list.id).catch(err =>
+                            console.error(`Failed to delete orphaned list ${list.id}:`, err)
                         );
                     }
-                }
-                for (const list of orphanedLists) {
-                    db.deleteList(userId, list.id).catch(err =>
-                        console.error(`Failed to delete orphaned list ${list.id}:`, err)
-                    );
                 }
 
                 const stateNow = useTaskStore.getState();
                 useTaskStore.setState({
-                    tasks: stateNow.tasks.filter(t => !orphanedListIds.has(t.listId)),
-                    lists: stateNow.lists.filter(l => !orphanedListIds.has(l.id)),
+                    tasks: stateNow.tasks.filter(t => !orphanedTaskIds.includes(t.id)),
+                    lists: stateNow.lists.filter(l => !emptyOrphanedListIds.has(l.id)),
                 });
 
                 removedCourseCount += orphanedLists.length;
@@ -366,14 +414,6 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                         newSyncedCourses.push(syncedCourse);
                         updatedCourseCount++;
                     } else {
-                        // The user deleted the list locally but it's still synced.
-                        // Purge all imported IDs for this course so it's fully re-imported into the new list
-                        const coursePrefix = `${course.id}:`;
-                        for (const key of newImportedIds) {
-                            if (key.startsWith(coursePrefix)) {
-                                newImportedIds.delete(key);
-                            }
-                        }
                         syncedCourse.listId = listId;
                         updatedCourseCount++;
                     }
@@ -389,41 +429,63 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                     // for today, keeping the due date relevant to the actual publish date.
                     const assignedTime = work.scheduledTime || work.updateTime || work.creationTime;
 
-                    // ──── Already imported — fix due date or completeness if needed ────
-                    if (newImportedIds.has(courseworkKey)) {
-                        const correctDueDate = facultyDueDate || autoGenerateDueDate(assignedTime);
-                        const existingTask = useTaskStore.getState().tasks.find(t =>
+                    // ──── Match existing task robustly ────
+                    let existingTask = useTaskStore.getState().tasks.find(t => 
+                        t.classroomCourseworkId === work.id
+                    );
+
+                    // Fallback to title matching if previously imported before the `classroomCourseworkId` fix
+                    if (!existingTask) {
+                        existingTask = useTaskStore.getState().tasks.find(t =>
                             t.listId === syncedCourse!.listId &&
                             t.title === work.title &&
                             t.source === 'classroom'
                         );
+                    }
 
-                        // Check if it got completed in GC later
-                        const gcCompleted = submissions.some(sub => sub.courseWorkId === work.id && (sub.state === 'TURNED_IN' || sub.state === 'RETURNED'));
+                    const correctDueDate = facultyDueDate || autoGenerateDueDate(assignedTime);
+                    const gcCompleted = submissions.some(sub => sub.courseWorkId === work.id && (sub.state === 'TURNED_IN' || sub.state === 'RETURNED'));
 
-                        // We update the task if due date changed OR if GC says it's completed but local says it isn't.
-                        // (We don't un-complete a task just because it's not marked done in GC, 
-                        // as users might simply check it off manually first locally).
-                        if (existingTask) {
-                            let doUpdate = false;
-                            const patch: Partial<Task> = {};
+                    if (existingTask) {
+                        newImportedIds.add(courseworkKey);
 
-                            if (existingTask.dueDate !== correctDueDate) {
-                                patch.dueDate = correctDueDate;
-                                patch.createdAt = assignedTime;
-                                doUpdate = true;
-                            }
+                        let doUpdate = false;
+                        const patch: Partial<Task> = {};
 
-                            if (gcCompleted && !existingTask.isCompleted) {
+                        // Backfill `classroomCourseworkId` if missing
+                        if (!existingTask.classroomCourseworkId) {
+                            patch.classroomCourseworkId = work.id;
+                            doUpdate = true;
+                        }
+
+                        if (existingTask.title !== work.title) {
+                            patch.title = work.title;
+                            doUpdate = true;
+                        }
+
+                        if (existingTask.dueDate !== correctDueDate) {
+                            patch.dueDate = correctDueDate;
+                            patch.createdAt = assignedTime;
+                            doUpdate = true;
+                        }
+
+                        // Verify completion state rules safely
+                        if (!existingTask.isCompleted) {
+                            // Only safely un-complete if Google says done
+                            if (gcCompleted) {
                                 patch.isCompleted = true;
                                 patch.status = 'done';
                                 patch.completedAt = new Date().toISOString();
+                                // Node completions are explicit manual. This came from GC.
                                 doUpdate = true;
                             }
+                        } else {
+                            // If previously completed in Node OR Classroom, preserve it.
+                            // DO NOT UNCOMPLETE any historically completed tasks!
+                        }
 
-                            if (doUpdate) {
-                                useTaskStore.getState().updateTask(existingTask.id, patch);
-                            }
+                        if (doUpdate) {
+                            useTaskStore.getState().updateTask(existingTask.id, patch);
                         }
                         continue;
                     }
@@ -450,6 +512,7 @@ export const useClassroomStore = create<ClassroomState>((set, get) => ({
                         completedAt: isCompletedInGC ? new Date().toISOString() : undefined,
                         sortOrder: currentTaskCount + newTaskCount,
                         source: 'classroom' as const,
+                        classroomCourseworkId: work.id,
                         labels: [],
                         subtasks: [],
                         createdAt: assignedTime,
