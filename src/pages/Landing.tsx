@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
+import { AnimatePresence, motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { ArrowUpRight, BarChart3, Brain, Clock3, GraduationCap, Menu, Target, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const markVisited = () => localStorage.setItem('node_visited', 'true');
 
-const reveal = {
+const reveal: Variants = {
   hidden: { opacity: 0, y: 26 },
-  visible: (delay = 0) => ({
+  visible: (delay: number = 0) => ({
     opacity: 1,
     y: 0,
     transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
