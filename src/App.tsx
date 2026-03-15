@@ -23,7 +23,71 @@ import { SettingsPanel } from "@/components/settings/SettingsPanel";
 const AdminFeedbackPage = lazy(() => import("./pages/AdminFeedback"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const TermsPage = lazy(() => import("./pages/Terms"));
+const LandingPage = lazy(() => import("./pages/Landing"));
 const queryClient = new QueryClient();
+
+// ─── Smart Root Redirect ──────────────────────────────────────
+// Checks in this exact order:
+// 1. Logged in (active Supabase session) → /dashboard
+// 2. PWA / installed app → /login
+// 3. First-time visitor (no node_visited flag) → Landing page
+// 4. Returning visitor, not logged in → /login
+
+const RootRedirect = () => {
+  const [showLanding, setShowLanding] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const redirect = async () => {
+      // 1. Active session → dashboard
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      // 2. PWA / installed app → login (never show landing)
+      const isPWA =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true;
+      if (isPWA) {
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      // 3. First-time visitor → show landing page
+      const hasVisited = localStorage.getItem('node_visited');
+      if (!hasVisited) {
+        setShowLanding(true);
+        return;
+      }
+
+      // 4. Returning visitor, not logged in → login
+      navigate('/login', { replace: true });
+    };
+
+    redirect();
+  }, [navigate]);
+
+  if (showLanding) {
+    return (
+      <Suspense fallback={null}>
+        <LandingPage />
+      </Suspense>
+    );
+  }
+
+  // Show nothing while checking (< 100ms)
+  return null;
+};
+
+// Direct landing page route — always shows landing unless logged in
+const HomeRoute = () => {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <Suspense fallback={null}><LandingPage /></Suspense>;
+};
 
 // Auth-aware route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -196,9 +260,12 @@ const AppContent = () => {
 
   return (
     <Routes>
+      {/* Smart root: first-timer → landing, returning → login, logged-in → dashboard */}
+      <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/home" element={<HomeRoute />} />
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <Index />

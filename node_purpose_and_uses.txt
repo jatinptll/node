@@ -1,0 +1,40 @@
+Node - Advanced Task & Academic Manager
+
+1. Purpose of Node
+Node is a premium, beautifully designed productivity application and academic manager. Its primary purpose is to help students and professionals manage their tasks, assignments, and workflows in an aesthetically pleasing and highly efficient environment. It aims to reduce friction in organization by providing intelligent analytics, a clean interface, and seamless synchronization with external platforms like Google Classroom.
+
+2. Target Audience
+- Students: To track academic assignments, deadlines, and courses.
+- Professionals: To manage workflows, prioritize tasks, and visualize productivity trends over time.
+
+3. Detailed Uses and Features
+
+A. Academic & Assignment Tracking (Google Classroom Sync)
+- Node is used to seamlessly connect to Google Classroom and automatically import courses and assignments.
+- It is aware of both scheduled and drafted assignments.
+- It dynamically updates assignment descriptions, deadlines, and due dates if the professor changes them.
+
+B. Deep Productivity Visualization & Analytics
+- Activity Heatmap: Users can visualize their entire year's task completion history via a 365-day commit-style heatmap. 
+- Streaks & Progress Ring: Designed to keep users motivated by tracking daily completion streaks and visualizing weekly progress using sparklines and ring charts.
+- Priority Check: Helps users focus by categorizing and visualizing upcoming deadlines purely by extreme urgency.
+
+C. Workflow Management & Organization Views
+- Kanban Board: Used for securely dragging and dropping tasks through different stages of completion.
+- Calendar View: Used for mapping out tasks, deadlines, and schedules on a visual calendar grid.
+- Eisenhower Matrix: Used to prioritize tasks logically based on urgency and importance.
+- Timeline View: Used to understand workloads and task durations over specific periods.
+
+D. Contextual Tagging & Clarity
+- Course & Subject Tags: Node intelligent displays colored tags for specific courses and subjects when tasks are viewed outside of their dedicated folders, quickly giving users context at a glance without clicking into the task.
+
+4. User Experience & Design Theme
+- State-of-the-Art Aesthetic: The app provides a beautiful user experience via live-rendered glassmorphism gradient orbs, smooth micro-animations (via Framer Motion), and precise spacing.
+- Dark & Light Modes: Users can instantly switch between fully supported, gorgeous Dark and Light themes.
+- Focused Interface: As a minimal AI-ready platform, the application surfaces keep attention strictly on the work rather than unnecessary "dashboard chrome."
+
+5. Technology Foundation
+- Built using React, TypeScript, and Vite on the frontend.
+- Styled with Tailwind CSS and raw CSS variables for glassmorphism.
+- Powered by Zustand for state management.
+- Backend, Database, and secure Google OAuth provided reliably by Supabase (PostgreSQL with Row Level Security).

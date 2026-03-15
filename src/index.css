@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -254,6 +254,36 @@ html {
 
   .text-gradient-purple {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--purple-400))] to-[hsl(var(--purple-600))];
+  }
+
+  .landing-gradient {
+    background:
+      radial-gradient(circle at 18% 22%, rgba(168, 85, 247, 0.28), transparent 24%),
+      radial-gradient(circle at 82% 18%, rgba(236, 72, 153, 0.24), transparent 24%),
+      radial-gradient(circle at 50% 78%, rgba(59, 130, 246, 0.2), transparent 28%),
+      linear-gradient(130deg, #090611 0%, #11081f 22%, #241046 48%, #46207f 70%, #1e1b4b 100%);
+    background-size: 180% 180%;
+    animation: landing-gradient-shift 18s ease-in-out infinite;
+  }
+
+  .landing-noise {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 0.6px, transparent 0.6px);
+    background-size: 14px 14px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent 96%);
+  }
+}
+
+@keyframes landing-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }
 

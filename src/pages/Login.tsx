@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/store/authStore';
 import { Diamond, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,7 +14,7 @@ const isIOSSafari = typeof navigator !== 'undefined' &&
 const LoginPage = () => {
     const { signInWithGoogle, isLoading, user } = useAuthStore();
 
-    if (user) return <Navigate to="/" replace />;
+    if (user) return <Navigate to="/dashboard" replace />;
 
     const handleGoogleSignIn = async () => {
         try {
@@ -178,6 +178,9 @@ const LoginPage = () => {
                 <p className="text-center text-[11px] text-muted-foreground mt-6">
                     By signing in, you agree to our terms of service
                 </p>
+                <Link to="/home" className="block text-center text-[11px] text-muted-foreground/60 hover:text-muted-foreground mt-3 transition-colors">
+                    ← Learn about Node
+                </Link>
             </motion.div>
         </div>
     );
