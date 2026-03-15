@@ -117,7 +117,7 @@ const LandingPage = () => {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center justify-center"
           >
-            <img src="public/node-logo-alt-1-3d.svg" alt="Node" className="h-auto w-[90px]" />
+            <img src="/node-logo-alt-1-3d.svg" alt="Node" className="h-auto w-[90px]" />
           </button>
 
           <div className="hidden md:block">
@@ -342,7 +342,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-6xl border-t border-white/10 py-8 md:py-10">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
             <div>
-              <img src="/node-logo-alt-3-white.svg" alt="Node" className="h-auto w-[92px]" />
+              <img src="/node-logo-alt-1-3d.svg" alt="Node" className="h-auto w-[92px]" />
               <p className="mt-4 text-sm text-white/64">Your work life, made intelligent.</p>
               <p className="mt-3 text-sm text-white/50">© 2026 Node · trynode.in</p>
             </div>
