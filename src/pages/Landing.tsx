@@ -117,7 +117,7 @@ const LandingPage = () => {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center justify-center"
           >
-            <img src="/node-logo-alt-3-white.svg" alt="Node" className="h-auto w-[90px]" />
+            <img src="public/node-logo-alt-1-3d.svg" alt="Node" className="h-auto w-[90px]" />
           </button>
 
           <div className="hidden md:block">
