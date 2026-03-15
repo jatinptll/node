@@ -81,11 +81,8 @@ const RootRedirect = () => {
   return null;
 };
 
-// Direct landing page route — always shows landing unless logged in
+// Direct landing page route — always shows landing
 const HomeRoute = () => {
-  const { user, isLoading } = useAuthStore();
-  if (isLoading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
   return <Suspense fallback={null}><LandingPage /></Suspense>;
 };
 
